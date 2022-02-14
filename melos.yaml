@@ -2,3 +2,6 @@ name: flac
 
 packages:
   - packages/**
+
+ignore:
+  - packages/**/*example
