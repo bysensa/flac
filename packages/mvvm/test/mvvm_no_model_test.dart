@@ -6,15 +6,15 @@ class SmallComponent extends FlacComponent {
   const SmallComponent({Key? key}) : super(key: key);
 
   @override
+  ComponentModel createModel() => const NoComponentModel();
+
+  @override
   FlacView<FlacViewModel<FlacComponent, ComponentModel>> createView() =>
       SmallView();
 
   @override
   FlacViewModel<FlacComponent, ComponentModel> createViewModel() =>
       SmallViewModel();
-
-  @override
-  ComponentModel createModel() => const NoComponentModel();
 }
 
 class SmallViewModel with FlacViewModel<SmallComponent, NoComponentModel> {

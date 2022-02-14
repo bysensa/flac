@@ -15,13 +15,13 @@ class TestComponent extends FlacComponent {
   }) : super(key: key);
 
   @override
+  ComponentModel createModel() => TestModel();
+
+  @override
   FlacView createView() => TestView();
 
   @override
   FlacViewModel createViewModel() => TestViewModel();
-
-  @override
-  ComponentModel createModel() => TestModel();
 }
 
 class TestViewModel with FlacViewModel<TestComponent, TestModel> {
@@ -44,7 +44,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    final _ = await tester.pumpAndSettle();
     expect(find.text('MVVM2'), findsOneWidget);
   });
 }

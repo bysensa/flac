@@ -12,18 +12,18 @@ abstract class FlacComponent extends Widget {
   ComponentModel createModel();
 
   @factory
-  FlacViewModel<FlacComponent, ComponentModel> createViewModel();
+  FlacView<FlacViewModel<FlacComponent, ComponentModel>> createView();
 
   @factory
-  FlacView<FlacViewModel<FlacComponent, ComponentModel>> createView();
+  FlacViewModel<FlacComponent, ComponentModel> createViewModel();
 }
 
 class FlacComponentElement extends ComponentElement {
+  bool _isFirstBuild = true;
+  ComponentModel? _model;
+  bool _shouldRebuildOnChangeDependencies = true;
   FlacView? _view;
   FlacViewModel? _viewModel;
-  bool _isFirstBuild = true;
-  bool _shouldRebuildOnChangeDependencies = true;
-  ComponentModel? _model;
 
   FlacComponentElement(FlacComponent widget)
       : _viewModel = widget.createViewModel(),
@@ -50,127 +50,14 @@ class FlacComponentElement extends ComponentElement {
   FlacViewModel get viewModel => _viewModel!;
   FlacView get view => _view!;
 
-  bool _debugTypesAreRight() {
-    final isViewTypesAreRight = view._debugTypesAreRight(viewModel);
-    final isViewModelTypesAreRight =
-        viewModel._debugTypesAreRight(component, _model!);
-    if (isViewModelTypesAreRight && isViewTypesAreRight) {
-      return true;
-    }
-    throw FlutterError.fromParts(<DiagnosticsNode>[
-      ErrorSummary(
-          'Invalid generic type declared in ${view.runtimeType} or ${viewModel.runtimeType}'),
-      ErrorDescription(
-        'View of type ${view.runtimeType} expect ViewModel of type ${view._viewModelType} '
-        'but component ${component.runtimeType} provide ViewModel of type ${viewModel.runtimeType} via ${component.runtimeType}.createViewModel.\n'
-        'ViewModel of type ${viewModel.runtimeType} expect component of type ${viewModel._componentType} and '
-        'model of type ${viewModel._modelType} but component type is ${component.runtimeType} and provided model type is ${_model.runtimeType}.',
-      ),
-    ]);
-  }
-
-  @override
-  void markNeedsBuild() {
-    if (_shouldRebuildOnChangeDependencies) {
-      super.markNeedsBuild();
-    } else {
-      viewModel.didChangeDependencies();
-    }
-  }
-
-  @override
-  void didChangeDependencies() {
-    _shouldRebuildOnChangeDependencies = false;
-    super.didChangeDependencies();
-    _shouldRebuildOnChangeDependencies = true;
-  }
-
-  void _firstBuild() {
-    assert(viewModel._debugLifecycle == _FlacViewModelLifecycle.created);
-    try {
-      final Object? debugCheckForReturnedFuture =
-          viewModel.initModel() as dynamic;
-      assert(() {
-        if (debugCheckForReturnedFuture is Future) {
-          throw FlutterError.fromParts(<DiagnosticsNode>[
-            ErrorSummary(
-                '${viewModel.runtimeType}.initState() returned a Future.'),
-            ErrorDescription(
-                'State.initState() must be a void method without an `async` keyword.'),
-            ErrorHint(
-              'Rather than awaiting on asynchronous work directly inside of initState, '
-              'call a separate method to do this work without awaiting it.',
-            ),
-          ]);
-        }
-        return true;
-      }());
-    } finally {
-      assert(() {
-        viewModel._debugLifecycle = _FlacViewModelLifecycle.initialized;
-        return true;
-      }());
-    }
-
-    try {
-      viewModel.didChangeDependencies();
-    } finally {
-      assert(() {
-        viewModel._debugLifecycle = _FlacViewModelLifecycle.ready;
-        return true;
-      }());
-    }
-  }
-
-  @override
-  void performRebuild() {
-    if (_isFirstBuild) {
-      _isFirstBuild = false;
-      _firstBuild();
-    }
-    super.performRebuild();
-  }
-
-  @override
-  void reassemble() {
-    if (_debugShouldReassemble(BindingBase.debugReassembleConfig, widget)) {
-      viewModel.reassemble();
-    }
-    super.reassemble();
-  }
-
-  @override
-  void update(FlacComponent newWidget) {
-    super.update(newWidget);
-    assert(widget == newWidget);
-    final FlacComponent oldComponent = viewModel._component!;
-    viewModel._component = component;
-    try {
-      final Object? debugCheckForReturnedFuture =
-          viewModel.didUpdateComponent(oldComponent) as dynamic;
-      assert(() {
-        if (debugCheckForReturnedFuture is Future) {
-          throw FlutterError.fromParts(<DiagnosticsNode>[
-            ErrorSummary(
-                '${viewModel.runtimeType}.didUpdateWidget() returned a Future.'),
-            ErrorDescription(
-                'State.didUpdateWidget() must be a void method without an `async` keyword.'),
-            ErrorHint(
-              'Rather than awaiting on asynchronous work directly inside of didUpdateWidget, '
-              'call a separate method to do this work without awaiting it.',
-            ),
-          ]);
-        }
-        return true;
-      }());
-    } finally {}
-  }
-
   @override
   void activate() {
     super.activate();
     viewModel.activate();
   }
+
+  @override
+  Widget build() => view.build(this);
 
   @override
   void deactivate() {
@@ -179,43 +66,38 @@ class FlacComponentElement extends ComponentElement {
   }
 
   @override
-  void unmount() {
-    super.unmount();
-    viewModel.dispose();
-    assert(() {
-      if (viewModel._debugLifecycle == _FlacViewModelLifecycle.defunct) {
-        return true;
-      }
-      throw FlutterError.fromParts(<DiagnosticsNode>[
-        ErrorSummary(
-            '${viewModel.runtimeType}.dispose failed to call super.dispose.'),
-        ErrorDescription(
-          'dispose() implementations must always call their superclass dispose() method, to ensure '
-          'that all the resources used by the widget are fully released.',
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties
+      ..add(
+        DiagnosticsProperty<FlacViewModel>(
+          'viewModel',
+          _viewModel,
+          defaultValue: null,
         ),
-      ]);
-    }());
-    // Release resources to reduce the severity of memory leaks caused by
-    // defunct, but accidentally retained Elements.
-    viewModel
-      .._element = null
-      .._model = null;
-    view._viewModel = null;
-    _view = null;
-    _viewModel = null;
-    _model = null;
+      )
+      ..add(
+        DiagnosticsProperty<FlacView>(
+          'view',
+          _view,
+          defaultValue: null,
+        ),
+      );
   }
 
   @override
-  InheritedWidget dependOnInheritedElement(Element? ancestor,
-      {Object? aspect}) {
+  InheritedWidget dependOnInheritedElement(
+    Element? ancestor, {
+    Object? aspect,
+  }) {
     assert(ancestor != null);
     assert(() {
       final Type targetType = ancestor!.widget.runtimeType;
       if (viewModel._debugLifecycle == _FlacViewModelLifecycle.created) {
         throw FlutterError.fromParts(<DiagnosticsNode>[
           ErrorSummary(
-              'dependOnInheritedWidgetOfExactType<$targetType>() or dependOnInheritedElement() was called before ${viewModel.runtimeType}.initState() completed.'),
+            'dependOnInheritedWidgetOfExactType<$targetType>() or dependOnInheritedElement() was called before ${viewModel.runtimeType}.initState() completed.',
+          ),
           ErrorDescription(
             'When an inherited widget changes, for example if the value of Theme.of() changes, '
             "its dependent widgets are rebuilt. If the dependent widget's reference to "
@@ -233,7 +115,8 @@ class FlacComponentElement extends ComponentElement {
       if (viewModel._debugLifecycle == _FlacViewModelLifecycle.defunct) {
         throw FlutterError.fromParts(<DiagnosticsNode>[
           ErrorSummary(
-              'dependOnInheritedWidgetOfExactType<$targetType>() or dependOnInheritedElement() was called after dispose(): $this'),
+            'dependOnInheritedWidgetOfExactType<$targetType>() or dependOnInheritedElement() was called after dispose(): $this',
+          ),
           ErrorDescription(
             'This error happens if you call dependOnInheritedWidgetOfExactType() on the '
             'BuildContext for a widget that no longer appears in the widget tree '
@@ -257,22 +140,165 @@ class FlacComponentElement extends ComponentElement {
           ),
         ]);
       }
+
       return true;
     }());
+
     return super
         .dependOnInheritedElement(ancestor as InheritedElement, aspect: aspect);
   }
 
   @override
-  Widget build() => view.build(this);
+  void didChangeDependencies() {
+    _shouldRebuildOnChangeDependencies = false;
+    super.didChangeDependencies();
+    _shouldRebuildOnChangeDependencies = true;
+  }
 
   @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties
-      ..add(DiagnosticsProperty<FlacViewModel>('viewModel', _viewModel,
-          defaultValue: null))
-      ..add(DiagnosticsProperty<FlacView>('view', _view, defaultValue: null));
+  void markNeedsBuild() {
+    if (_shouldRebuildOnChangeDependencies) {
+      super.markNeedsBuild();
+    } else {
+      viewModel.didChangeDependencies();
+    }
+  }
+
+  @override
+  void performRebuild() {
+    if (_isFirstBuild) {
+      _isFirstBuild = false;
+      _firstBuild();
+    }
+    super.performRebuild();
+  }
+
+  @override
+  void reassemble() {
+    if (_debugShouldReassemble(BindingBase.debugReassembleConfig, widget)) {
+      viewModel.reassemble();
+    }
+    super.reassemble();
+  }
+
+  @override
+  void unmount() {
+    super.unmount();
+    viewModel.dispose();
+    assert(() {
+      if (viewModel._debugLifecycle == _FlacViewModelLifecycle.defunct) {
+        return true;
+      }
+      throw FlutterError.fromParts(<DiagnosticsNode>[
+        ErrorSummary(
+          '${viewModel.runtimeType}.dispose failed to call super.dispose.',
+        ),
+        ErrorDescription(
+          'dispose() implementations must always call their superclass dispose() method, to ensure '
+          'that all the resources used by the widget are fully released.',
+        ),
+      ]);
+    }());
+    // Release resources to reduce the severity of memory leaks caused by
+    // defunct, but accidentally retained Elements.
+    viewModel
+      .._element = null
+      .._model = null;
+    view._viewModel = null;
+    _view = null;
+    _viewModel = null;
+    _model = null;
+  }
+
+  @override
+  void update(FlacComponent newWidget) {
+    super.update(newWidget);
+    assert(widget == newWidget);
+    final FlacComponent oldComponent = viewModel._component!;
+    viewModel._component = component;
+
+    final Object? debugCheckForReturnedFuture =
+        viewModel.didUpdateComponent(oldComponent) as dynamic;
+    assert(() {
+      if (debugCheckForReturnedFuture is Future) {
+        throw FlutterError.fromParts(<DiagnosticsNode>[
+          ErrorSummary(
+            '${viewModel.runtimeType}.didUpdateWidget() returned a Future.',
+          ),
+          ErrorDescription(
+            'State.didUpdateWidget() must be a void method without an `async` keyword.',
+          ),
+          ErrorHint(
+            'Rather than awaiting on asynchronous work directly inside of didUpdateWidget, '
+            'call a separate method to do this work without awaiting it.',
+          ),
+        ]);
+      }
+
+      return true;
+    }());
+  }
+
+  bool _debugTypesAreRight() {
+    final isViewTypesAreRight = view._debugTypesAreRight(viewModel);
+    final isViewModelTypesAreRight =
+        viewModel._debugTypesAreRight(component, _model!);
+    if (isViewModelTypesAreRight && isViewTypesAreRight) {
+      return true;
+    }
+    throw FlutterError.fromParts(<DiagnosticsNode>[
+      ErrorSummary(
+        'Invalid generic type declared in ${view.runtimeType} or ${viewModel.runtimeType}',
+      ),
+      ErrorDescription(
+        'View of type ${view.runtimeType} expect ViewModel of type ${view._viewModelType} '
+        'but component ${component.runtimeType} provide ViewModel of type ${viewModel.runtimeType} via ${component.runtimeType}.createViewModel.\n'
+        'ViewModel of type ${viewModel.runtimeType} expect component of type ${viewModel._componentType} and '
+        'model of type ${viewModel._modelType} but component type is ${component.runtimeType} and provided model type is ${_model.runtimeType}.',
+      ),
+    ]);
+  }
+
+  void _firstBuild() {
+    assert(viewModel._debugLifecycle == _FlacViewModelLifecycle.created);
+    try {
+      final Object? debugCheckForReturnedFuture =
+          viewModel.initModel() as dynamic;
+      assert(() {
+        if (debugCheckForReturnedFuture is Future) {
+          throw FlutterError.fromParts(<DiagnosticsNode>[
+            ErrorSummary(
+              '${viewModel.runtimeType}.initState() returned a Future.',
+            ),
+            ErrorDescription(
+              'State.initState() must be a void method without an `async` keyword.',
+            ),
+            ErrorHint(
+              'Rather than awaiting on asynchronous work directly inside of initState, '
+              'call a separate method to do this work without awaiting it.',
+            ),
+          ]);
+        }
+
+        return true;
+      }());
+    } finally {
+      assert(() {
+        viewModel._debugLifecycle = _FlacViewModelLifecycle.initialized;
+
+        return true;
+      }());
+    }
+
+    try {
+      viewModel.didChangeDependencies();
+    } finally {
+      assert(() {
+        viewModel._debugLifecycle = _FlacViewModelLifecycle.ready;
+
+        return true;
+      }());
+    }
   }
 }
 
@@ -338,8 +364,10 @@ mixin FlacViewModel<C extends FlacComponent, M extends ComponentModel> {
           'Consider canceling any active work during "dispose" or using the "mounted" getter to determine if the State is still active.',
         );
       }
+
       return true;
     }(), '');
+
     return _element!;
   }
 
@@ -364,6 +392,7 @@ mixin FlacViewModel<C extends FlacComponent, M extends ComponentModel> {
     assert(_debugLifecycle == _FlacViewModelLifecycle.ready);
     assert(() {
       _debugLifecycle = _FlacViewModelLifecycle.defunct;
+
       return true;
     }());
   }
@@ -380,10 +409,16 @@ mixin FlacViewModel<C extends FlacComponent, M extends ComponentModel> {
   void debugFillProperties(DiagnosticPropertiesBuilder properties) {
     properties
       // ..add(ObjectFlagProperty<M>('model', _model, ifNull: 'no model'))
-      ..add(ObjectFlagProperty<FlacComponent>('component', _component,
-          ifNull: 'no component'))
-      ..add(ObjectFlagProperty<Element>('_element', _element,
-          ifNull: 'not mounted'));
+      ..add(ObjectFlagProperty<FlacComponent>(
+        'component',
+        _component,
+        ifNull: 'no component',
+      ))
+      ..add(ObjectFlagProperty<Element>(
+        '_element',
+        _element,
+        ifNull: 'not mounted',
+      ));
   }
 
   @mustCallSuper
