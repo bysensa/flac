@@ -1,0 +1,1 @@
+library flac_mvvm;
