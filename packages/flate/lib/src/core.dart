@@ -1,0 +1,24 @@
+import 'dart:async';
+import 'dart:collection';
+import 'package:flate/flate.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:synchronized/synchronized.dart';
+
+part 'core/activity.dart';
+part 'core/fragment.dart';
+part 'core/fragments_registry.dart';
+part 'core/part.dart';
+part 'core/parts_registry.dart';
+part 'core/service.dart';
+part 'core/services_registry.dart';
+part 'core/store.dart';
+part 'core/types.dart';
+part 'core/registration.dart';
+part 'core/exceptions.dart';
+part 'core/element.dart';
+part 'core/context.dart';
+part 'core/context_registry.dart';
+part 'core/action.dart';
+part 'core/intent.dart';
