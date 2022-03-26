@@ -2,15 +2,10 @@ import 'dart:async';
 
 import 'package:flate/flate.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobx/mobx.dart' hide Observable;
 
 void main() {
   testWidgets('should render component', (tester) async {
-    mainContext.config = ReactiveConfig.main.clone(
-      writePolicy: ReactiveWritePolicy.never,
-    );
     final store = TestStore();
     final streamController = StreamController<int>();
     await tester.pumpWidget(
