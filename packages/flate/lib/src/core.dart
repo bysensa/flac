@@ -21,4 +21,3 @@ part 'core/element.dart';
 part 'core/context.dart';
 part 'core/context_registry.dart';
 part 'core/action.dart';
-part 'core/intent.dart';

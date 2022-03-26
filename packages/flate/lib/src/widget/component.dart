@@ -10,6 +10,9 @@ abstract class FlateComponent extends Widget {
   @factory
   FlateComponentModel createModel();
 
+  @protected
+  bool shouldNotRebuild(Widget newWidget) => this == newWidget;
+
   @override
   Element createElement() => FlateComponentElement(this);
 }
@@ -56,13 +59,21 @@ abstract class FlateComponentModel<T extends FlateComponent>
   Widget build(BuildContext context);
 
   @override
-  Object? invoke(FlateIntent intent, [BuildContext? context]) {}
+  Object? invoke(FlateIntent intent, [BuildContext? context]) {
+    return null;
+  }
+
+  bool onNotification(FlateNotification notification) => false;
 }
 
 class FlateComponentElement extends ComponentElement {
   FlateComponentModel<FlateComponent>? _model;
   bool _isFirstBuild = true;
   IntentRegistration? _intentRegistration;
+
+  // rebuild specific variables
+  bool _shouldNotRebuild = false;
+  Widget? _oldChildWidget;
 
   FlateComponentElement(FlateComponent widget)
       : _model = widget.createModel(),
@@ -100,10 +111,23 @@ class FlateComponentElement extends ComponentElement {
   FlateComponent get widget => super.widget as FlateComponent;
 
   @override
-  Widget build() => Actions(
-        actions: _intentRegistration ?? {},
-        child: Builder(builder: model.build),
+  Widget build() {
+    if (_oldChildWidget == null || !_shouldNotRebuild) {
+      _shouldNotRebuild = false;
+      _oldChildWidget = _ComponentWrapper(
+        builder: model.build,
+        notificationHandler: model.onNotification,
+        registration: _intentRegistration,
       );
+    }
+
+    return _oldChildWidget!;
+  }
+
+  void _clear() {
+    _oldChildWidget = null;
+    _shouldNotRebuild = false;
+  }
 
   @mustCallSuper
   @override
@@ -151,36 +175,53 @@ class FlateComponentElement extends ComponentElement {
 
   @override
   void update(FlateComponent newWidget) {
+    _shouldNotRebuild = widget.shouldNotRebuild(newWidget);
     super.update(newWidget);
     assert(widget == newWidget);
     final FlateComponent oldWidget = model._widget!;
     model._widget = widget;
 
-    final Object? debugCheckForReturnedFuture =
-        model.didUpdateWidget(oldWidget) as dynamic;
-    assert(() {
-      if (debugCheckForReturnedFuture is Future) {
-        throw FlutterError.fromParts(<DiagnosticsNode>[
-          ErrorSummary(
-            '${model.runtimeType}.didUpdateWidget() returned a Future.',
-          ),
-          ErrorDescription(
-            'State.didUpdateWidget() must be a void method without an `async` keyword.',
-          ),
-          ErrorHint(
-            'Rather than awaiting on asynchronous work directly inside of didUpdateWidget, '
-            'call a separate method to do this work without awaiting it.',
-          ),
-        ]);
-      }
+    if (!_shouldNotRebuild) {
+      final Object? debugCheckForReturnedFuture =
+          model.didUpdateWidget(oldWidget) as dynamic;
+      assert(() {
+        if (debugCheckForReturnedFuture is Future) {
+          throw FlutterError.fromParts(<DiagnosticsNode>[
+            ErrorSummary(
+              '${model.runtimeType}.didUpdateWidget() returned a Future.',
+            ),
+            ErrorDescription(
+              'State.didUpdateWidget() must be a void method without an `async` keyword.',
+            ),
+            ErrorHint(
+              'Rather than awaiting on asynchronous work directly inside of didUpdateWidget, '
+              'call a separate method to do this work without awaiting it.',
+            ),
+          ]);
+        }
 
-      return true;
-    }());
+        return true;
+      }());
+    }
+    rebuild();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _clear();
+    super.didChangeDependencies();
+  }
+
+  @override
+  void reassemble() {
+    _clear();
+    super.reassemble();
   }
 
   @mustCallSuper
   @override
   void deactivate() {
+    _clear();
     model.deactivate();
     super.deactivate();
   }
@@ -189,10 +230,33 @@ class FlateComponentElement extends ComponentElement {
   @override
   void unmount() {
     super.unmount();
+    _clear();
     model.dispose();
     model._element = null;
     // Release resources to reduce the severity of memory leaks caused by
     // defunct, but accidentally retained Elements.
     _model = null;
   }
+}
+
+class _ComponentWrapper extends StatelessWidget {
+  final IntentRegistration? registration;
+  final bool Function(FlateNotification) notificationHandler;
+  final WidgetBuilder builder;
+
+  const _ComponentWrapper({
+    required this.notificationHandler,
+    required this.builder,
+    this.registration,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) => Actions(
+        actions: registration ?? {},
+        child: NotificationListener<FlateNotification>(
+          onNotification: notificationHandler,
+          child: Builder(builder: builder),
+        ),
+      );
 }

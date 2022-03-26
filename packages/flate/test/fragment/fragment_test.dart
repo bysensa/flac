@@ -99,7 +99,3 @@ class TestFragment extends FlateFragment {
 class TestPart extends FlatePart {}
 
 class TestService extends FlateService {}
-
-class FirstActivity with FlateActivity {}
-
-class SecondActivity with FlateActivity {}

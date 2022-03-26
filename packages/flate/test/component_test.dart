@@ -91,6 +91,12 @@ class TestComponentModel extends FlateComponentModel<TestComponent> {
   }
 
   @override
+  bool onNotification(FlateNotification notification) {
+    print(notification);
+    return true;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Observer(builder: (context) {
       print('text=${text.value}');
@@ -98,6 +104,7 @@ class TestComponentModel extends FlateComponentModel<TestComponent> {
         onPressed: () {
           context.invoke(ValueChangeIntent(value: 1));
           context.invoke(ValueChangeIntentForCallback(value: 1));
+          context.dispatch(ValueChangeNotification(value: 1));
         },
         child: Text(text.value),
       );
@@ -119,6 +126,14 @@ class ValueChangeIntentForCallback extends FlateIntent {
   final int value;
 
   ValueChangeIntentForCallback({
+    required this.value,
+  });
+}
+
+class ValueChangeNotification extends FlateNotification {
+  final int value;
+
+  ValueChangeNotification({
     required this.value,
   });
 }
