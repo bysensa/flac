@@ -56,7 +56,7 @@ class TestComponent extends FlateComponent {
 
 class TestComponentModel extends FlateComponentModel<TestComponent> {
   late final TestFragment fragment;
-  final Observable<String> text = Observable('');
+  final ValueNotifier<String> text = ValueNotifier('');
 
   @override
   void registerIntents(IntentRegistration registration) {
@@ -81,34 +81,37 @@ class TestComponentModel extends FlateComponentModel<TestComponent> {
     ValueChangeIntentForCallback intent, [
     BuildContext? context,
   ]) {
-    print(intent);
+    assert(intent is ValueChangeIntentForCallback);
   }
 
   @override
   Object? invoke(FlateIntent intent, [BuildContext? context]) {
-    print(intent);
+    assert(intent is ValueChangeIntent);
     return null;
   }
 
   @override
   bool onNotification(FlateNotification notification) {
-    print(notification);
+    assert(notification is ValueChangeNotification);
     return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Observer(builder: (context) {
-      print('text=${text.value}');
-      return ElevatedButton(
-        onPressed: () {
-          context.invoke(ValueChangeIntent(value: 1));
-          context.invoke(ValueChangeIntentForCallback(value: 1));
-          context.dispatch(ValueChangeNotification(value: 1));
-        },
-        child: Text(text.value),
-      );
-    });
+    return ValueListenableBuilder<String>(
+      valueListenable: text,
+      builder: (context, value, child) {
+        print('text=${text.value}');
+        return ElevatedButton(
+          onPressed: () {
+            context.invoke(ValueChangeIntent(value: 1));
+            context.invoke(ValueChangeIntentForCallback(value: 1));
+            context.dispatch(ValueChangeNotification(value: 1));
+          },
+          child: Text(text.value),
+        );
+      },
+    );
   }
 }
 

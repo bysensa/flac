@@ -40,27 +40,6 @@ void main() {
     expect(fragment.isDisposed, isTrue);
   });
 
-  test('fragment can commit in nested order', () async {
-    final StringBuffer output = StringBuffer();
-    final store = TestFragment();
-    await store.commit(() async {
-      output.write('u1');
-      store.commit(() async {
-        output.write('n1');
-      });
-      output.write('u2');
-      store.commit(() async {
-        output.write('n2');
-        store.commit(() async {
-          output.write('in1');
-        });
-        output.write('n3');
-      });
-      output.write('u3');
-    });
-    expect(output.toString(), 'u1n1u2n2in1n3u3');
-  });
-
   test('fragment should provide part', () async {
     final part = TestPart();
     final service = TestService();

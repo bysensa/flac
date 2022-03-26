@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'dart:collection';
-import 'package:flate/flate.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:synchronized/synchronized.dart';
+import 'package:meta/meta.dart';
 
 part 'core/activity.dart';
 part 'core/fragment.dart';
@@ -21,3 +19,4 @@ part 'core/element.dart';
 part 'core/context.dart';
 part 'core/context_registry.dart';
 part 'core/action.dart';
+part 'core/commit.dart';

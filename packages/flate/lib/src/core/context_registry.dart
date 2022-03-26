@@ -22,7 +22,7 @@ mixin _ConfigurationRegistry {
     return types[C] as C;
   }
 
-  /// Register [fragment] instance
+  /// Register [context] instance with one or n types
   void _registerContext(FlateContext context) {
     final registration = Registration(instance: context);
     context.register(registration);
@@ -36,6 +36,9 @@ mixin _ConfigurationRegistry {
     }
   }
 
+  /// Perform activation of registered [FlateContext]
+  ///
+  /// The [FlateContext.activate] will be called during invocation of this method.
   Future<void> _activateContext() async {
     for (var context in _contextTypes.values.toSet()) {
       try {
@@ -49,6 +52,9 @@ mixin _ConfigurationRegistry {
     }
   }
 
+  /// Perform deactivation of registered [FlateContext]
+  ///
+  /// The [FlateContext.deactivate] will be called during invocation of this method.
   Future<void> _deactivateContext() async {
     for (var context in _contextTypes.values.toSet()) {
       try {
