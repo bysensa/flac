@@ -5,6 +5,7 @@ packages:
 
 ignore:
   - packages/**/*example
+  - packages/**/example
 
 scripts:
   metrics:
