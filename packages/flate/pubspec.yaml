@@ -1,7 +1,7 @@
 name: flate
 description: Flutter state management library inspired by Verge state manager for Swift
 version: 0.0.1
-homepage:
+repository:
 
 environment:
   sdk: ">=2.15.1 <3.0.0"
@@ -11,7 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  synchronized: 3.0.0
+  synchronized: ^3.0.0
+  meta: ^1.7.0
 
 dev_dependencies:
   flutter_test:
