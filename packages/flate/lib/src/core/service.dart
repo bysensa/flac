@@ -31,11 +31,4 @@ part of '../core.dart';
 /// }
 /// ```
 ///
-abstract class FlateService extends FlateElement {
-  C useContext<C>() {
-    if (isMounted) {
-      return _store!.useContext<C>();
-    }
-    throw StateError('Service of type $runtimeType is not mounted');
-  }
-}
+abstract class FlateService extends FlateElement with _ContextResolver {}

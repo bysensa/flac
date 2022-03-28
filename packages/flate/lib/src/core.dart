@@ -20,3 +20,4 @@ part 'core/context.dart';
 part 'core/context_registry.dart';
 part 'core/action.dart';
 part 'core/commit.dart';
+part 'core/resolvers.dart';

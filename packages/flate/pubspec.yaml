@@ -1,6 +1,6 @@
 name: flate
 description: This package provides a set of components for creating a flexible and scalable architecture for applications written in Flutter.
-version: 0.0.1
+version: 0.0.1+1
 repository: https://github.com/bysensa/flac/tree/master/packages/flate
 
 environment:
