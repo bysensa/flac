@@ -10,10 +10,12 @@ class Flate extends StatefulWidget {
   final List<FlateService> services;
   final Widget loading;
   final Widget ready;
+  final Duration viewSwitchDuration;
 
   const Flate({
     required this.ready,
     required this.loading,
+    this.viewSwitchDuration = const Duration(milliseconds: 500),
     this.fragments = const [],
     this.parts = const [],
     this.services = const [],
@@ -31,10 +33,12 @@ class Flate extends StatefulWidget {
 class _FlateState extends State<Flate> {
   final Lock _initializationLock = Lock();
   late final FlateStore _store;
+  late Widget _currentView;
 
   @override
   void initState() {
     super.initState();
+    _currentView = widget.loading;
     _store = FlateStore(
       context: widget.context,
       fragments: widget.fragments,
@@ -45,7 +49,14 @@ class _FlateState extends State<Flate> {
   }
 
   void _rebuild() {
-    setState(() {});
+    setState(() {
+      _currentView = _store.lifecycle != FlateStoreLifecycle.ready
+          ? widget.loading
+          : _Scope(
+              store: _store,
+              child: widget.ready,
+            );
+    });
   }
 
   @override
@@ -57,13 +68,9 @@ class _FlateState extends State<Flate> {
 
   @override
   Widget build(BuildContext context) {
-    if (_store.lifecycle != FlateStoreLifecycle.ready) {
-      return widget.loading;
-    }
-
-    return _Scope(
-      store: _store,
-      child: widget.ready,
+    return AnimatedSwitcher(
+      duration: widget.viewSwitchDuration,
+      child: _currentView,
     );
   }
 }

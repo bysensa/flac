@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:meta/meta.dart';
@@ -21,3 +23,4 @@ part 'core/context_registry.dart';
 part 'core/action.dart';
 part 'core/commit.dart';
 part 'core/resolvers.dart';
+part 'core/app_observer.dart';

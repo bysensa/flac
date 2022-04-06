@@ -27,7 +27,10 @@ class FlateStore extends ChangeNotifier
         _FragmentsRegistry,
         _PartsRegistry,
         _ServicesRegistry,
-        _ConfigurationRegistry {
+        _ConfigurationRegistry,
+        _AppObserversRegistryMixin,
+        WidgetsBindingObserver,
+        _WidgetsBindingObserverOverride {
   FlateStoreLifecycle _lifecycle = FlateStoreLifecycle.uninitialized;
 
   @mustCallSuper
@@ -37,7 +40,7 @@ class FlateStore extends ChangeNotifier
     Iterable<FlatePart> parts = const [],
     Iterable<FlateService> services = const [],
   }) {
-    _registerContext(context ?? DefaultContext());
+    _resolveAndRegisterContext(context);
     _registerServices(services);
     _registerSharedParts(parts);
     _registerFragments(fragments);
@@ -45,6 +48,14 @@ class FlateStore extends ChangeNotifier
 
   /// Return this store lifecycle
   FlateStoreLifecycle get lifecycle => _lifecycle;
+
+  /// Register provided or default [FlateContext] and if context implement [AppObserverMixin]
+  /// then register such context as app observer
+  void _resolveAndRegisterContext(FlateContext? context) {
+    final resolvedContext = context ?? DefaultContext();
+    _registerContext(resolvedContext);
+    _maybeRegisterAppObserver(resolvedContext);
+  }
 
   /// This method register all [FlatePart] provided by [sharedParts] in this [FlateStore]
   ///
@@ -56,6 +67,7 @@ class FlateStore extends ChangeNotifier
     for (final part in sharedParts) {
       _registerPart(part);
       part._mount(this);
+      _maybeRegisterAppObserver(part);
     }
   }
 
@@ -69,6 +81,7 @@ class FlateStore extends ChangeNotifier
     for (final fragment in fragments) {
       _registerFragment(fragment);
       fragment._mount(this);
+      _maybeRegisterAppObserver(fragment);
     }
   }
 
@@ -82,6 +95,7 @@ class FlateStore extends ChangeNotifier
     for (final service in services) {
       _registerService(service);
       service._mount(this);
+      _maybeRegisterAppObserver(service);
     }
   }
 
@@ -108,6 +122,7 @@ class FlateStore extends ChangeNotifier
     await _activateServices();
     await _activateParts();
     await _activateFragments();
+    WidgetsBinding.instance?.addObserver(this);
     _lifecycle = FlateStoreLifecycle.ready;
     notifyListeners();
   }
@@ -125,6 +140,7 @@ class FlateStore extends ChangeNotifier
     _lifecycle = FlateStoreLifecycle.disposing;
     notifyListeners();
     try {
+      WidgetsBinding.instance?.removeObserver(this);
       await _deactivateFragments();
       await _deactivateParts();
       await _deactivateServices();
@@ -133,5 +149,18 @@ class FlateStore extends ChangeNotifier
       _lifecycle = FlateStoreLifecycle.uninitialized;
       notifyListeners();
     }
+  }
+}
+
+mixin _WidgetsBindingObserverOverride
+    on WidgetsBindingObserver, _AppObserversRegistryMixin {
+  @override
+  void didHaveMemoryPressure() {
+    handleMemoryPressure();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    handleAppLifecycleStateChange(state);
   }
 }
