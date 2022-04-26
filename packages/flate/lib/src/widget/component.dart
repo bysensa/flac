@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../core.dart';
+import 'action.dart';
 import 'container.dart';
 
 abstract class FlateComponent extends Widget {
@@ -22,10 +23,15 @@ abstract class FlateComponent extends Widget {
   Element createElement() => FlateComponentElement(this);
 }
 
-abstract class FlateComponentModel<T extends FlateComponent>
-    extends ContextAction<FlateIntent> with IntentRegistrationProvider {
+abstract class FlateComponentModel<T extends FlateComponent> {
   T? _widget;
   FlateComponentElement? _element;
+  late final _internalAction = _ComponentInternalAction(
+    invokeDelegate: invoke,
+    isEnabledDelegate: canHandleIntent,
+    consumesKeyDelegate: actionsConsumesKey,
+    isActionEnabledDelegate: () => canHandleIntents,
+  );
 
   /// The current configuration.
   ///
@@ -186,12 +192,21 @@ abstract class FlateComponentModel<T extends FlateComponent>
   @protected
   Widget build(BuildContext context);
 
-  @override
-  Object? invoke(FlateIntent intent, [BuildContext? context]) {
+  bool actionsConsumesKey(Intent intent) => false;
+
+  Object? invoke(Intent intent, [BuildContext? context]) {
     return null;
   }
 
-  bool onNotification(FlateNotification notification) => false;
+  bool get canHandleIntents => true;
+
+  bool canHandleIntent(Intent intent) => true;
+
+  void registerIntents(IntentRegistration registration) {}
+
+  void notifyActions() {
+    _internalAction.notifyListeners();
+  }
 }
 
 class FlateComponentElement extends ComponentElement {
@@ -235,7 +250,10 @@ class FlateComponentElement extends ComponentElement {
       'for createState.',
     );
     model._widget = widget;
-    _intentRegistration = IntentRegistrator(componentModel: model)..prepare();
+    _intentRegistration = IntentRegistrator(
+      intentRegistrationFn: model.registerIntents,
+      delegatedAction: model._internalAction,
+    )..prepare();
   }
 
   /// Returns [FlateComponentModel] related to this element.
@@ -250,8 +268,7 @@ class FlateComponentElement extends ComponentElement {
       _shouldNotRebuild = false;
       _oldChildWidget = _ComponentWrapper(
         builder: model.build,
-        notificationHandler: model.onNotification,
-        registration: _intentRegistration,
+        actions: _intentRegistration,
       );
     }
 
@@ -375,23 +392,165 @@ class FlateComponentElement extends ComponentElement {
 
 /// Widget used to configure utility widgets to support some [FlateComponentModel] functionality.
 class _ComponentWrapper extends StatelessWidget {
-  final IntentRegistrator? registration;
-  final bool Function(FlateNotification) notificationHandler;
+  final Map<Type, Action<Intent>>? actions;
   final WidgetBuilder builder;
 
   const _ComponentWrapper({
-    required this.notificationHandler,
     required this.builder,
-    this.registration,
+    this.actions,
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) => Actions(
-        actions: registration ?? {},
-        child: NotificationListener<FlateNotification>(
-          onNotification: notificationHandler,
-          child: Builder(builder: builder),
-        ),
+        actions: actions ?? {},
+        dispatcher: const ActionDispatcher(),
+        child: Builder(builder: builder),
       );
+}
+
+mixin FlateComponentMixin<T extends StatefulWidget> on State<T> {
+  late IntentRegistrator _intentRegistration;
+  late _ComponentInternalAction _internalAction;
+
+  /// Contains latest widget built by [build] method
+  Widget? _oldChildWidget;
+
+  /// if value is true then [build] method return [_oldChildWidget] else new
+  /// [_oldChildWidget] value will be build during [build] call.
+  bool _shouldNotRebuild = false;
+
+  /// Drop cached child widget created during [build] and reset [_shouldNotRebuild]
+  void _clearWidgetCache() {
+    _oldChildWidget = null;
+    _shouldNotRebuild = false;
+  }
+
+  /// Flag that determines whether the widget built by the method [build] will be cached
+  ///
+  /// If flag returns true then new widget will be built else cached widget will be returned
+  bool shouldNotRebuild(covariant T oldWidget) => false;
+
+  /// Provide [FlateFragment] of type [F] from [FlateStore] provided by [Flate]
+  F useFragment<F extends FlateFragment>() {
+    if (!mounted) {
+      throw StateError(
+        'Method useFragment<$F>() was called on unmounted element',
+      );
+    }
+
+    return Flate.useFragment<F>(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_oldChildWidget == null || !_shouldNotRebuild) {
+      _shouldNotRebuild = false;
+      _oldChildWidget = _ComponentWrapper(
+        builder: buildWidget,
+        actions: _intentRegistration,
+      );
+    }
+
+    return _oldChildWidget!;
+  }
+
+  Widget buildWidget(BuildContext context);
+
+  @override
+  void initState() {
+    super.initState();
+    _internalAction = _ComponentInternalAction(
+      consumesKeyDelegate: actionsConsumesKey,
+      invokeDelegate: invoke,
+      isEnabledDelegate: canHandleIntent,
+      isActionEnabledDelegate: () => canHandleIntents,
+    );
+    _intentRegistration = IntentRegistrator(
+      intentRegistrationFn: registerIntents,
+      delegatedAction: _internalAction,
+    )..prepare();
+  }
+
+  @override
+  void didUpdateWidget(covariant T oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _shouldNotRebuild = shouldNotRebuild(oldWidget);
+  }
+
+  @override
+  void didChangeDependencies() {
+    _clearWidgetCache();
+    super.didChangeDependencies();
+  }
+
+  @override
+  void reassemble() {
+    _clearWidgetCache();
+    super.reassemble();
+  }
+
+  @override
+  void deactivate() {
+    _clearWidgetCache();
+    super.deactivate();
+  }
+
+  @override
+  void dispose() {
+    _clearWidgetCache();
+    super.dispose();
+  }
+
+  bool actionsConsumesKey(Intent intent) => false;
+
+  Object? invoke(covariant Intent intent, [BuildContext? context]) {
+    return null;
+  }
+
+  bool get canHandleIntents => true;
+
+  bool canHandleIntent(Intent intent) => true;
+
+  void registerIntents(IntentRegistration registration) {}
+
+  void notifyActions() {
+    _internalAction.notifyListeners();
+  }
+}
+
+class _ComponentInternalAction extends ContextAction<Intent> {
+  final Object? Function(
+    Intent intent, [
+    BuildContext? context,
+  ]) invokeDelegate;
+
+  final bool Function(Intent intent) isEnabledDelegate;
+  final bool Function(Intent intent) consumesKeyDelegate;
+  final bool Function() isActionEnabledDelegate;
+
+  _ComponentInternalAction({
+    required this.invokeDelegate,
+    required this.isEnabledDelegate,
+    required this.consumesKeyDelegate,
+    required this.isActionEnabledDelegate,
+  });
+
+  @override
+  bool get isActionEnabled => isActionEnabledDelegate();
+
+  @override
+  Object? invoke(Intent intent, [BuildContext? context]) {
+    return invokeDelegate(intent, context);
+  }
+
+  @override
+  bool isEnabled(Intent intent) => isEnabledDelegate(intent);
+
+  @override
+  bool consumesKey(Intent intent) => consumesKeyDelegate(intent);
+
+  void notifyListeners() {
+    notifyActionListeners();
+  }
 }

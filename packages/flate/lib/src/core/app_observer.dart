@@ -12,8 +12,8 @@ mixin AppObserverMixin {
 mixin _AppObserversRegistryMixin {
   final HashedObserverList<AppObserverMixin> _observers = HashedObserverList();
 
-  /// Register [FlateElement] as observer if element conforms to type [AppObserverMixin]
-  void _maybeRegisterAppObserver(FlateElement element) {
+  /// Register [FlateElementMixin] as observer if element conforms to type [AppObserverMixin]
+  void _maybeRegisterAppObserver(FlateElementMixin element) {
     if (element is AppObserverMixin) {
       _observers.add(element as AppObserverMixin);
     }

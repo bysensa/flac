@@ -80,7 +80,7 @@ class TestComponentModel extends FlateComponentModel<TestComponent> {
   }
 
   @override
-  Object? invoke(FlateIntent intent, [BuildContext? context]) {
+  Object? invoke(Intent intent, [BuildContext? context]) {
     assert(intent is ValueChangeIntent);
     return null;
   }

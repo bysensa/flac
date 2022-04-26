@@ -1,4 +1,4 @@
-part of '../core.dart';
+import 'package:flutter/widgets.dart';
 
 /// Marker mixin for future usage.
 mixin FlateActivity {}

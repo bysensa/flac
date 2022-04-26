@@ -1,10 +1,10 @@
 part of '../core.dart';
 
-class InitializationException implements Exception {
+class ActivationException implements Exception {
   final dynamic exception;
   final StackTrace trace;
 
-  const InitializationException({
+  const ActivationException({
     required this.exception,
     required this.trace,
   });
@@ -15,11 +15,11 @@ class InitializationException implements Exception {
   }
 }
 
-class DisposeException implements Exception {
+class DeactivationException implements Exception {
   final dynamic exception;
   final StackTrace trace;
 
-  const DisposeException({
+  const DeactivationException({
     required this.exception,
     required this.trace,
   });

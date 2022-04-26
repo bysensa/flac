@@ -58,8 +58,6 @@ class _CommitGuard {
 ///   }
 /// }
 /// ```
-@visibleForTesting
-@protected
 Future<T> commit<T>(
   CommitCallback<T> callback, {
   String? debugName,

@@ -1,16 +1,23 @@
-part of '../core.dart';
+import 'dart:collection';
+
+import 'package:flutter/widgets.dart';
+import 'package:meta/meta.dart';
+
+import 'activity.dart';
 
 /// Type definition of intent handling function used in [ContextAction] for specific [FlateIntent] type
-typedef ComponentActionCallback<T extends FlateIntent> = Object? Function(
+typedef ComponentActionCallback<T extends Intent> = Object? Function(
   T intent, [
   BuildContext? context,
 ]);
+
+typedef IntentRegistrationFn = void Function(IntentRegistration);
 
 /// Mixin which perform [FlateIntent] registration via [IntentRegistrator]
 ///
 /// __This class is internal and should not be used directly__
 @internal
-mixin IntentRegistrationProvider on ContextAction<FlateIntent> {
+mixin IntentRegistrationProvider on ContextAction<Intent> {
   /// Extend this method to define which types of [FlateIntent] can be handled
   ///
   /// Intent types can be register with or without [ComponentActionCallback]. If
@@ -55,7 +62,7 @@ mixin IntentRegistration {
   ///
   /// This method use [ContextAction.invoke] as default callback for [T]. Use
   /// [registerWithCallback] if you want provide custom callback for intent of type [T].
-  void register<T extends FlateIntent>();
+  void register<T extends Intent>();
 
   /// Register [_ComponentActionWrapper] for provided [FlateIntent] type [T] with callback
   ///
@@ -67,7 +74,7 @@ mixin IntentRegistration {
   ///
   /// registration.registerWithCallback<SomeIntent>(someCallback);
   ///
-  void registerWithCallback<T extends FlateIntent>(
+  void registerWithCallback<T extends Intent>(
     ComponentActionCallback<T> callback,
   );
 }
@@ -84,12 +91,15 @@ mixin IntentRegistration {
 @internal
 class IntentRegistrator extends UnmodifiableMapBase<Type, Action<Intent>>
     with IntentRegistration {
-  final IntentRegistrationProvider _registrationProvider;
+  final IntentRegistrationFn _intentRegistrationFn;
   final Map<Type, Action<Intent>> _actions = {};
+  final ContextAction<Intent> _delegatedAction;
 
   IntentRegistrator({
-    required IntentRegistrationProvider componentModel,
-  }) : _registrationProvider = componentModel;
+    required IntentRegistrationFn intentRegistrationFn,
+    required ContextAction<Intent> delegatedAction,
+  })  : _intentRegistrationFn = intentRegistrationFn,
+        _delegatedAction = delegatedAction;
 
   /// Return all registered [FlateIntent] types.
   ///
@@ -101,21 +111,20 @@ class IntentRegistrator extends UnmodifiableMapBase<Type, Action<Intent>>
   ///
   /// This method should be called before any operations with internal actions map.
   void prepare() {
-    _registrationProvider.registerIntents(this);
+    _intentRegistrationFn(this);
   }
 
   @override
-  void register<T extends FlateIntent>() {
-    _actions[T] =
-        _ComponentActionWrapper<T>(componentModel: _registrationProvider);
+  void register<T extends Intent>() {
+    _actions[T] = _ComponentActionWrapper<T>(delegatedAction: _delegatedAction);
   }
 
   @override
-  void registerWithCallback<T extends FlateIntent>(
+  void registerWithCallback<T extends Intent>(
     ComponentActionCallback<T> callback,
   ) {
     _actions[T] = _ComponentActionWrapper<T>(
-      componentModel: _registrationProvider,
+      delegatedAction: _delegatedAction,
       callback: callback,
     );
   }
@@ -136,18 +145,18 @@ class IntentRegistrator extends UnmodifiableMapBase<Type, Action<Intent>>
 /// Else if [FlateIntent] type registered with associated callback then intent
 /// provided via invocation will be handled by associated callback. Also this class
 /// delegate some methods and getter calls to provided [_registrationProvider].
-class _ComponentActionWrapper<T extends FlateIntent> extends ContextAction<T> {
-  final IntentRegistrationProvider _registrationProvider;
+class _ComponentActionWrapper<T extends Intent> extends ContextAction<T> {
   final ComponentActionCallback<T>? _callback;
+  final ContextAction<Intent> _delegatedAction;
 
   _ComponentActionWrapper({
-    required IntentRegistrationProvider componentModel,
+    required ContextAction<Intent> delegatedAction,
     ComponentActionCallback<T>? callback,
-  })  : _registrationProvider = componentModel,
-        _callback = callback;
+  })  : _callback = callback,
+        _delegatedAction = delegatedAction;
 
   @override
-  bool get isActionEnabled => _registrationProvider.isActionEnabled;
+  bool get isActionEnabled => _delegatedAction.isActionEnabled;
 
   @override
   Type get intentType => T;
@@ -155,25 +164,25 @@ class _ComponentActionWrapper<T extends FlateIntent> extends ContextAction<T> {
   @override
   Object? invoke(T intent, [BuildContext? context]) {
     return _callback == null
-        ? _registrationProvider.invoke(intent, context)
+        ? _delegatedAction.invoke(intent, context)
         : _callback!(intent, context);
   }
 
   @override
   void removeActionListener(ActionListenerCallback listener) {
-    _registrationProvider.removeActionListener(listener);
+    _delegatedAction.removeActionListener(listener);
     super.removeActionListener(listener);
   }
 
   @override
   void addActionListener(ActionListenerCallback listener) {
     super.addActionListener(listener);
-    _registrationProvider.addActionListener(listener);
+    _delegatedAction.addActionListener(listener);
   }
 
   @override
-  bool consumesKey(T intent) => _registrationProvider.consumesKey(intent);
+  bool consumesKey(T intent) => _delegatedAction.consumesKey(intent);
 
   @override
-  bool isEnabled(T intent) => _registrationProvider.isEnabled(intent);
+  bool isEnabled(T intent) => _delegatedAction.isEnabled(intent);
 }

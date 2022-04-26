@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 
 mixin ShouldNotRebuildMixin on StatelessWidget {
   @protected
-  bool shouldNotRebuild(Widget newWidget);
+  bool shouldNotRebuild(covariant Widget newWidget);
 
   @override
   StatelessElement createElement() => StatelessShouldRebuildElement(this);
