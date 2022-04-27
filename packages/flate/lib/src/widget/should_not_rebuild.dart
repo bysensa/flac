@@ -1,23 +1,18 @@
 import 'package:flutter/widgets.dart';
 
-mixin ShouldNotRebuildMixin on StatelessWidget {
+mixin ShouldNotRebuildMixin on Widget {
   @protected
-  bool shouldNotRebuild(covariant Widget newWidget);
-
-  @override
-  StatelessElement createElement() => StatelessShouldRebuildElement(this);
+  bool shouldNotRebuild(covariant Widget newWidget) => false;
 }
 
-class StatelessShouldRebuildElement extends StatelessElement {
-  bool shouldNotRebuild = false;
-  Widget? oldChildWidget;
-
-  StatelessShouldRebuildElement(StatelessWidget widget) : super(widget);
+mixin ShouldNotRebuildElementMixin on ComponentElement {
+  bool _shouldNotRebuild = false;
+  Widget? _oldChildWidget;
 
   @override
   void update(covariant StatelessWidget newWidget) {
     if (widget is ShouldNotRebuildMixin) {
-      shouldNotRebuild =
+      _shouldNotRebuild =
           (widget as ShouldNotRebuildMixin).shouldNotRebuild(newWidget);
     }
     super.update(newWidget);
@@ -25,40 +20,59 @@ class StatelessShouldRebuildElement extends StatelessElement {
 
   @override
   void deactivate() {
-    _clear();
+    _dropCachedWidget();
     super.deactivate();
   }
 
   @override
   void didChangeDependencies() {
-    _clear();
+    _dropCachedWidget();
     super.didChangeDependencies();
   }
 
   @override
   void reassemble() {
-    _clear();
+    _dropCachedWidget();
     super.reassemble();
   }
 
-  void _clear() {
-    oldChildWidget = null;
-    shouldNotRebuild = false;
+  void _dropCachedWidget() {
+    _oldChildWidget = null;
+    _shouldNotRebuild = false;
   }
 
   @override
   void unmount() {
-    _clear();
+    _dropCachedWidget();
     super.unmount();
   }
 
-  @override
-  Widget build() {
-    if (oldChildWidget == null || !shouldNotRebuild) {
-      oldChildWidget = super.build();
-      shouldNotRebuild = false;
+  Widget _maybeBuild(ValueGetter<Widget> builder) {
+    if (_oldChildWidget == null || !_shouldNotRebuild) {
+      _oldChildWidget = builder();
+      _shouldNotRebuild = false;
     }
 
-    return oldChildWidget!;
+    return _oldChildWidget!;
+  }
+}
+
+abstract class StatelessShouldNotRebuildWidget extends StatelessWidget
+    with ShouldNotRebuildMixin {
+  const StatelessShouldNotRebuildWidget({Key? key}) : super(key: key);
+
+  @override
+  StatelessElement createElement() => StatelessShouldNotRebuildElement(this);
+}
+
+class StatelessShouldNotRebuildElement extends StatelessElement
+    with ShouldNotRebuildElementMixin {
+  StatelessShouldNotRebuildElement(
+    StatelessShouldNotRebuildWidget widget,
+  ) : super(widget);
+
+  @override
+  Widget build() {
+    return _maybeBuild(super.build);
   }
 }
