@@ -27,3 +27,4 @@
 .packages
 build/
 coverage
+pubspec.lock
