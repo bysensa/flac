@@ -6,7 +6,7 @@ void main() {
   testWidgets('stateless widget should rebuild every time', (tester) async {});
 }
 
-class StatelessTestWidget extends StatelessWidget with ShouldNotRebuildMixin {
+class StatelessTestWidget extends StatelessWidget with ReduceRebuildMixin {
   final int value;
 
   const StatelessTestWidget({

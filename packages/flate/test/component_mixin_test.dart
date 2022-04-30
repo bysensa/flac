@@ -20,11 +20,6 @@ class _TestWidgetState extends State<TestWidget> with FlateComponentMixin {
   var secondIntentHandled = false;
 
   @override
-  bool shouldNotRebuild(covariant TestWidget oldWidget) {
-    return widget.runtimeType == oldWidget.runtimeType;
-  }
-
-  @override
   void registerIntents(IntentRegistration registration) {
     registration.register<FirstIntent>();
     registration.registerWithCallback(onSecondIntent);
@@ -39,6 +34,7 @@ class _TestWidgetState extends State<TestWidget> with FlateComponentMixin {
     if (intent is FirstIntent) {
       processedIntentCount += 1;
     }
+    setState(() {});
     return null;
   }
 
@@ -53,16 +49,24 @@ class _TestWidgetState extends State<TestWidget> with FlateComponentMixin {
   }
 
   @override
-  Widget buildWidget(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: ElevatedButton(
-            onPressed: () {
-              context.maybeInvoke(FirstIntent());
-              context.maybeInvoke(SecondIntent());
-            },
-            child: const Text('tap'),
+  Widget build(BuildContext context) {
+    return FlateComponentActions(
+      reduceRebuilds: true,
+      component: this,
+      child: MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () {
+                    context.maybeInvoke(FirstIntent());
+                    context.maybeInvoke(SecondIntent());
+                  },
+                  child: const Text('tap'),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -77,18 +81,14 @@ void main() {
   });
 
   testWidgets('should handle intents', (tester) async {
-    await tester.pumpWidget(FutureBuilder<Object?>(
-        future: Future.delayed(Duration(milliseconds: 100)),
-        builder: (context, snapshot) {
-          return TestWidget();
-        }));
+    await tester.pumpWidget(TestWidget());
     await tester.pumpAndSettle();
     final btn = find.byType(ElevatedButton);
     await tester.tap(btn);
     await tester.pumpAndSettle();
     final state = tester.state(find.byType(TestWidget));
     expect((state as _TestWidgetState).processedIntentCount, 2);
-    expect((state as _TestWidgetState).firstIntentHandled, isTrue);
-    expect((state as _TestWidgetState).secondIntentHandled, isTrue);
+    expect((state).firstIntentHandled, isTrue);
+    expect((state).secondIntentHandled, isTrue);
   });
 }

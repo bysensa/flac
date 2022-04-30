@@ -1,19 +1,19 @@
 import 'package:flutter/widgets.dart';
 
-mixin ShouldNotRebuildMixin on Widget {
+mixin ReduceRebuildMixin on StatelessWidget {
   @protected
   bool shouldNotRebuild(covariant Widget newWidget) => false;
 }
 
-mixin ShouldNotRebuildElementMixin on ComponentElement {
+mixin ReduceRebuildElementMixin on StatelessElement {
   bool _shouldNotRebuild = false;
   Widget? _oldChildWidget;
 
   @override
   void update(covariant StatelessWidget newWidget) {
-    if (widget is ShouldNotRebuildMixin) {
+    if (widget is ReduceRebuildMixin) {
       _shouldNotRebuild =
-          (widget as ShouldNotRebuildMixin).shouldNotRebuild(newWidget);
+          (widget as ReduceRebuildMixin).shouldNotRebuild(newWidget);
     }
     super.update(newWidget);
   }
@@ -57,22 +57,40 @@ mixin ShouldNotRebuildElementMixin on ComponentElement {
   }
 }
 
-abstract class StatelessShouldNotRebuildWidget extends StatelessWidget
-    with ShouldNotRebuildMixin {
-  const StatelessShouldNotRebuildWidget({Key? key}) : super(key: key);
+abstract class StatelessReduceRebuildWidget extends StatelessWidget
+    with ReduceRebuildMixin {
+  const StatelessReduceRebuildWidget({Key? key}) : super(key: key);
 
   @override
-  StatelessElement createElement() => StatelessShouldNotRebuildElement(this);
+  StatelessElement createElement() => StatelessReduceRebuildElement(this);
 }
 
-class StatelessShouldNotRebuildElement extends StatelessElement
-    with ShouldNotRebuildElementMixin {
-  StatelessShouldNotRebuildElement(
-    StatelessShouldNotRebuildWidget widget,
-  ) : super(widget);
+class StatelessReduceRebuildElement extends StatelessElement
+    with ReduceRebuildElementMixin {
+  StatelessReduceRebuildElement(StatelessReduceRebuildWidget widget)
+      : super(widget);
 
   @override
   Widget build() {
     return _maybeBuild(super.build);
+  }
+}
+
+class ReduceRebuild extends StatelessReduceRebuildWidget {
+  final ValueGetter<bool> predicate;
+  final Widget child;
+
+  const ReduceRebuild({
+    required this.predicate,
+    required this.child,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  bool shouldNotRebuild(covariant Widget newWidget) => predicate();
+
+  @override
+  Widget build(BuildContext context) {
+    return child;
   }
 }

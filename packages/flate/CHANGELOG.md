@@ -11,5 +11,6 @@
 * Implement AppObserver API to allow elements handle memory pressure and app lifecycle change
 * Change code organization
 * Support creating custom variations of `FlateService`, `FlatePart`, `FlateFragment`
-* Implement `FlateComponentMixin` for usage with `StatefulWidget`
+* Implement `FlateComponentMixin` used to create logical ui components
 * Remove `onNotification` method from FlateComponentModel
+* Implement `StatelessReduceRebuildWidget` for widget rebuild optimization 
