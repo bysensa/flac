@@ -88,6 +88,48 @@ class _ComponentInternalAction extends ContextAction<Intent> {
   }
 }
 
+/// Widget delegate intent invocation to component.
+///
+/// Example:
+///
+/// ```dart
+/// class IntentWithCommonHandler extends Intent {}
+/// class ExampleIntent extends Intent {}
+///
+/// class ExampleComponent extends StatefulWidget {
+///   const ExampleComponent({Key? key}) : super(key: key);
+///
+///   @override
+///   State<ExampleComponent> createState() => _ExampleComponentState();
+/// }
+///
+/// class _ExampleComponentState extends State<ExampleComponent>
+///     with FlateComponentMixin {
+///
+///   @override
+///   void registerIntents(IntentRegistration registration) {
+///     registration.registerWithCallback(onExampleIntent);
+///   }
+///
+///   void onExampleIntent(ExampleIntent intent, [BuildContext? context]) {}
+///
+///
+///   @override
+///   void invoke(Intent intent, [BuildContext? context]) {
+///     if (intent is IntentWithCommonHandler) {
+///       // do something here
+///     }
+///   }
+///
+///   @override
+///   Widget build(BuildContext context) {
+///     return FlateComponentActions(
+///       component: this,
+///       child: Container(),
+///     );
+///   }
+/// }
+/// ```
 class FlateComponentActions extends StatelessReduceRebuildWidget {
   final FlateComponentMixin component;
   final ActionDispatcher? actionDispatcher;

@@ -1,5 +1,7 @@
 part of '../core.dart';
 
+/// Mixin used to mark class as AppObserver. Classes marked with this mixin can handle
+/// memory pressure events or app lifecycle state change
 mixin AppObserverMixin {
   /// Called when the system is running low on memory.
   void handleMemoryPressure() {}
@@ -42,5 +44,18 @@ mixin _AppObserversRegistryMixin {
         Zone.current.handleUncaughtError,
       );
     }
+  }
+}
+
+mixin _WidgetsBindingObserverOverride
+    on WidgetsBindingObserver, _AppObserversRegistryMixin {
+  @override
+  void didHaveMemoryPressure() {
+    handleMemoryPressure();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    handleAppLifecycleStateChange(state);
   }
 }

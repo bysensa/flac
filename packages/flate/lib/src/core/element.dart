@@ -1,12 +1,13 @@
 part of '../core.dart';
 
+/// [FlateElementMixin] is main primitive in Flate architecture
 mixin FlateElementMixin {
   static final _storeMount = Expando<FlateStore>('storeMount');
 
+  /// Returns instance of [FlateStore] connected to this element
   FlateStore? get _store => _storeMount[this];
 
-  @visibleForTesting
-  @protected
+  /// Returns true when element connected to store, else getter returns false
   bool get isMounted => _store != null;
 
   /// This method used during registration to define set of [Type] with which this [FlateElementMixin] will be registered
@@ -58,7 +59,7 @@ mixin FlateElementMixin {
   @protected
   C _useContext<C>() {
     if (isMounted) {
-      return _store!.useContext<C>();
+      return _store!._useContext<C>();
     }
     throw StateError('Element of type $runtimeType is not mounted');
   }

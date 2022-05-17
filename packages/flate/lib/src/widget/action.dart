@@ -3,9 +3,9 @@ import 'dart:collection';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
-import 'activity.dart';
+import 'context.extension.dart';
 
-/// Type definition of intent handling function used in [ContextAction] for specific [FlateIntent] type
+/// Type definition of intent handling function used in [ContextAction] for specific [Intent] type
 typedef ComponentActionCallback<T extends Intent> = Object? Function(
   T intent, [
   BuildContext? context,
@@ -13,12 +13,12 @@ typedef ComponentActionCallback<T extends Intent> = Object? Function(
 
 typedef IntentRegistrationFn = void Function(IntentRegistration);
 
-/// Mixin which perform [FlateIntent] registration via [IntentRegistrator]
+/// Mixin which perform [Intent] registration via [IntentRegistrator]
 ///
 /// __This class is internal and should not be used directly__
 @internal
 mixin IntentRegistrationProvider on ContextAction<Intent> {
-  /// Extend this method to define which types of [FlateIntent] can be handled
+  /// Extend this method to define which types of [Intent] can be handled
   ///
   /// Intent types can be register with or without [ComponentActionCallback]. If
   /// callback not provided then default [invoke] method will be called. In [FlateComponentModel]
@@ -47,7 +47,7 @@ mixin IntentRegistrationProvider on ContextAction<Intent> {
   ///
   ///   /// Default intent handler
   ///   @override
-  ///   Object? invoke(FlateIntent intent, [BuildContext? context]) {
+  ///   Object? invoke(Intent intent, [BuildContext? context]) {
   ///     assert(intent is SomeIntent);
   ///     return null;
   ///   }
@@ -58,13 +58,13 @@ mixin IntentRegistrationProvider on ContextAction<Intent> {
 }
 
 mixin IntentRegistration {
-  /// Register [_ComponentActionWrapper] for provided [FlateIntent] type [T].
+  /// Register [_ComponentActionWrapper] for provided [Intent] type [T].
   ///
   /// This method use [ContextAction.invoke] as default callback for [T]. Use
   /// [registerWithCallback] if you want provide custom callback for intent of type [T].
   void register<T extends Intent>();
 
-  /// Register [_ComponentActionWrapper] for provided [FlateIntent] type [T] with callback
+  /// Register [_ComponentActionWrapper] for provided [Intent] type [T] with callback
   ///
   /// Provided callback will be called for each instance of type [T].
   ///
@@ -79,7 +79,7 @@ mixin IntentRegistration {
   );
 }
 
-/// Class used to create and collect [_ComponentActionWrapper] for types of [FlateIntent]
+/// Class used to create and collect [_ComponentActionWrapper] for types of [Intent]
 /// provided during [prepare] invocation via [register] or [registerWithCallback]
 /// methods.
 ///
@@ -101,7 +101,7 @@ class IntentRegistrator extends UnmodifiableMapBase<Type, Action<Intent>>
   })  : _intentRegistrationFn = intentRegistrationFn,
         _delegatedAction = delegatedAction;
 
-  /// Return all registered [FlateIntent] types.
+  /// Return all registered [Intent] types.
   ///
   /// Before [prepare] method call this getter will return empty iterator.
   @override
@@ -129,9 +129,9 @@ class IntentRegistrator extends UnmodifiableMapBase<Type, Action<Intent>>
     );
   }
 
-  /// Returns [Action] for [FlateIntent] type provided as key
+  /// Returns [Action] for [Intent] type provided as key
   ///
-  /// If [_ComponentActionWrapper] for [Type] of [FlateIntent] is not registered
+  /// If [_ComponentActionWrapper] for [Type] of [Intent] is not registered
   /// then null will be returned.
   @override
   Action<Intent>? operator [](Object? key) => _actions[key];
@@ -139,10 +139,10 @@ class IntentRegistrator extends UnmodifiableMapBase<Type, Action<Intent>>
 
 /// Class used as proxy for [ContextAction] invocation.
 ///
-/// There are two cases which this class used to solve. If [FlateIntent] type
+/// There are two cases which this class used to solve. If [Intent] type
 /// registered without associated callback then this class delegate invocation
 /// to default callback.
-/// Else if [FlateIntent] type registered with associated callback then intent
+/// Else if [Intent] type registered with associated callback then intent
 /// provided via invocation will be handled by associated callback. Also this class
 /// delegate some methods and getter calls to provided [_registrationProvider].
 class _ComponentActionWrapper<T extends Intent> extends ContextAction<T> {

@@ -24,10 +24,7 @@ enum FlateStoreLifecycle {
 /// of interaction with external systems through [FlateService].
 class FlateStore extends ChangeNotifier
     with
-        _FragmentsRegistry,
-        _PartsRegistry,
-        _ServicesRegistry,
-        _ContextRegistry,
+        _ElementsRegistry,
         _AppObserversRegistryMixin,
         WidgetsBindingObserver,
         _WidgetsBindingObserverOverride {
@@ -53,7 +50,7 @@ class FlateStore extends ChangeNotifier
   /// then register such context as app observer
   void _resolveAndRegisterContext(FlateContext? context) {
     final resolvedContext = context ?? DefaultContext();
-    _registerContext(resolvedContext);
+    _registerElement(resolvedContext, _contextTypes);
     resolvedContext._mount(this);
     _maybeRegisterAppObserver(resolvedContext);
   }
@@ -66,7 +63,7 @@ class FlateStore extends ChangeNotifier
   /// The number of entries is equal to the number of calculated [Type] for part.
   void _registerSharedParts(Iterable<FlatePartMixin> sharedParts) {
     for (final part in sharedParts) {
-      _registerPart(part);
+      _registerElement(part, _registeredParts);
       part._mount(this);
       _maybeRegisterAppObserver(part);
     }
@@ -80,7 +77,7 @@ class FlateStore extends ChangeNotifier
   /// The number of entries is equal to the number of calculated [Type] for fragment.
   void _registerFragments(Iterable<FlateFragmentMixin> fragments) {
     for (final fragment in fragments) {
-      _registerFragment(fragment);
+      _registerElement(fragment, _registeredFragments);
       fragment._mount(this);
       _maybeRegisterAppObserver(fragment);
     }
@@ -94,7 +91,7 @@ class FlateStore extends ChangeNotifier
   /// The number of entries is equal to the number of calculated [Type] for service.
   void _registerServices(Iterable<FlateServiceMixin> services) {
     for (final service in services) {
-      _registerService(service);
+      _registerElement(service, _registeredServices);
       service._mount(this);
       _maybeRegisterAppObserver(service);
     }
@@ -119,11 +116,11 @@ class FlateStore extends ChangeNotifier
 
     _lifecycle = FlateStoreLifecycle.initialization;
     notifyListeners();
-    await _activateContext();
-    await _activateServices();
-    await _activateParts();
-    await _activateFragments();
-    WidgetsBinding.instance?.addObserver(this);
+    await _activateElements(_contextTypes);
+    await _activateElements(_registeredServices);
+    await _activateElements(_registeredParts);
+    await _activateElements(_registeredFragments);
+    WidgetsBinding.instance.addObserver(this);
     _lifecycle = FlateStoreLifecycle.ready;
     notifyListeners();
   }
@@ -141,11 +138,12 @@ class FlateStore extends ChangeNotifier
     _lifecycle = FlateStoreLifecycle.disposing;
     notifyListeners();
     try {
-      WidgetsBinding.instance?.removeObserver(this);
-      await _deactivateFragments();
-      await _deactivateParts();
-      await _deactivateServices();
-      await _deactivateContext();
+      WidgetsBinding.instance.removeObserver(this);
+      _releaseAppObservers();
+      await _deactivateElements(_registeredFragments);
+      await _deactivateElements(_registeredParts);
+      await _deactivateElements(_registeredServices);
+      await _deactivateElements(_contextTypes);
     } finally {
       _lifecycle = FlateStoreLifecycle.uninitialized;
       notifyListeners();
@@ -153,20 +151,52 @@ class FlateStore extends ChangeNotifier
   }
 }
 
-mixin _ContextRegistry {
+mixin _ElementsRegistry {
   final Map<Type, FlateContext> _contextTypes = {};
+  final Map<Type, FlateServiceMixin> _registeredServices = {};
+  final Map<Type, FlatePartMixin> _registeredParts = {};
+  final Map<Type, FlateFragmentMixin> _registeredFragments = {};
 
-  /// Returns all registered parts
+  /// Returns instance of [FlateFragment] by [Type] provided in generic parameter [F]
   ///
-  /// Returned map may contains multiple entries for single instance of [FlateFragment].
-  Map<Type, FlateContext> get _context {
-    return _contextTypes;
+  /// If instance of [FlateFragment] is not registered by type [F] then [StateError] throws.
+  F useFragment<F>() {
+    final fragments = _registeredFragments;
+    if (!fragments.containsKey(F)) {
+      throw StateError('Fragment of type $F not registered for $runtimeType');
+    }
+
+    return fragments[F] as F;
+  }
+
+  /// Returns instance of [FlatePart] by [Type] provided in generic parameter [P]
+  ///
+  /// If instance of [FlatePart] is not registered by type [P] then [StateError] throws.
+  P _usePart<P>() {
+    final parts = _registeredParts;
+    if (!parts.containsKey(P)) {
+      throw StateError('Part of type $P not registered in $runtimeType');
+    }
+
+    return parts[P] as P;
+  }
+
+  /// Returns instance of [FlateService] by [Type] provided in generic parameter [S]
+  ///
+  /// If instance of [FlateService] is not registered by type [S] then [StateError] throws.
+  S _useService<S>() {
+    final services = _registeredServices;
+    if (!services.containsKey(S)) {
+      throw StateError('Service of type $S not registered in $runtimeType');
+    }
+
+    return services[S] as S;
   }
 
   /// Returns instance of [FlateContext] by [Type] provided in generic parameter [C]
   ///
   /// If instance of [FlateContext] is not registered by type [C] then [StateError] throws.
-  C useContext<C>() {
+  C _useContext<C>() {
     final types = _contextTypes;
     if (!types.containsKey(C)) {
       throw StateError('Context of type $C not registered for $runtimeType');
@@ -175,27 +205,32 @@ mixin _ContextRegistry {
     return types[C] as C;
   }
 
-  /// Register [context] instance with one or n types
-  void _registerContext(FlateContext context) {
-    final registration = Registration(instance: context);
-    context.register(registration);
+  /// Register [element] instance with one or more types
+  void _registerElement(
+    FlateElementMixin element,
+    Map<Type, FlateElementMixin> elementsCollection,
+  ) {
+    final registration = Registration(instance: element);
+    element.register(registration);
     for (final type in registration.types) {
-      if (_contextTypes.containsKey(type)) {
+      if (elementsCollection.containsKey(type)) {
         throw StateError(
-          'Context ${context.runtimeType} already registered with type $type',
+          '${element.runtimeType} already registered with type $type',
         );
       }
-      _contextTypes[type] = context;
+      elementsCollection[type] = element;
     }
   }
 
-  /// Perform activation of registered [FlateContext]
+  /// Perform activation of elements provided in [elementsCollection]
   ///
-  /// The [FlateContext.activate] will be called during invocation of this method.
-  Future<void> _activateContext() async {
-    for (var context in _contextTypes.values.toSet()) {
+  /// The [FlateElementMixin.activate] will be called during invocation of this method.
+  Future<void> _activateElements(
+    Map<Type, FlateElementMixin> elementsCollection,
+  ) async {
+    for (var element in elementsCollection.values.toSet()) {
       try {
-        await context.activate();
+        await element.activate();
       } catch (err, trace) {
         Zone.current.handleUncaughtError(
           ActivationException(exception: err, trace: trace),
@@ -205,13 +240,15 @@ mixin _ContextRegistry {
     }
   }
 
-  /// Perform deactivation of registered [FlateContext]
+  /// Perform deactivation of elements in provided [elementsCollection]
   ///
-  /// The [FlateContext.deactivate] will be called during invocation of this method.
-  Future<void> _deactivateContext() async {
-    for (var context in _contextTypes.values.toSet()) {
+  /// The [FlateElementMixin.deactivate] will be called during invocation of this method.
+  Future<void> _deactivateElements(
+    Map<Type, FlateElementMixin> elementsCollection,
+  ) async {
+    for (var element in elementsCollection.values.toSet()) {
       try {
-        await context.deactivate();
+        await element.deactivate();
       } catch (err, trace) {
         Zone.current.handleUncaughtError(
           DeactivationException(exception: err, trace: trace),
@@ -219,208 +256,5 @@ mixin _ContextRegistry {
         );
       }
     }
-  }
-}
-
-mixin _ServicesRegistry {
-  final Map<Type, FlateServiceMixin> _registeredServices = {};
-
-  /// Returns all registered services
-  ///
-  /// Returned map may contains multiple entries for single instance of [FlateService].
-  Map<Type, FlateServiceMixin> get _services {
-    return _registeredServices;
-  }
-
-  /// Returns instance of [FlateService] by [Type] provided in generic parameter [S]
-  ///
-  /// If instance of [FlateService] is not registered by type [S] then [StateError] throws.
-  S _useService<S>() {
-    final services = _services;
-    if (!services.containsKey(S)) {
-      throw StateError('Service of type $S not registered in $runtimeType');
-    }
-
-    return services[S] as S;
-  }
-
-  /// Register provided [service]
-  void _registerService(FlateServiceMixin service) {
-    final registration = Registration(instance: service);
-    service.register(registration);
-    for (final type in registration.types) {
-      if (_registeredServices.containsKey(type)) {
-        throw StateError(
-          'Part ${service.runtimeType} already registered with type $type',
-        );
-      }
-      _registeredServices[type] = service;
-    }
-  }
-
-  Future<void> _activateServices() async {
-    for (var service in _registeredServices.values.toSet()) {
-      try {
-        await service.activate();
-      } catch (err, trace) {
-        Zone.current.handleUncaughtError(
-          ActivationException(exception: err, trace: trace),
-          trace,
-        );
-      }
-    }
-  }
-
-  Future<void> _deactivateServices() async {
-    for (var service in _registeredServices.values.toSet()) {
-      try {
-        await service.deactivate();
-      } catch (err, trace) {
-        Zone.current.handleUncaughtError(
-          DeactivationException(exception: err, trace: trace),
-          trace,
-        );
-      }
-    }
-    _registeredServices.clear();
-  }
-}
-
-mixin _PartsRegistry {
-  final Map<Type, FlatePartMixin> _registeredParts = {};
-
-  /// Returns all registered parts
-  ///
-  /// Returned map may contains multiple entries for single instance of [FlatePart].
-  Map<Type, FlatePartMixin> get _parts {
-    return _registeredParts;
-  }
-
-  /// Returns instance of [FlatePart] by [Type] provided in generic parameter [P]
-  ///
-  /// If instance of [FlatePart] is not registered by type [P] then [StateError] throws.
-  P _usePart<P>() {
-    final parts = _parts;
-    if (!parts.containsKey(P)) {
-      throw StateError('Part of type $P not registered in $runtimeType');
-    }
-
-    return parts[P] as P;
-  }
-
-  /// Register provided [part]
-  void _registerPart(FlatePartMixin part) {
-    final registration = Registration(instance: part);
-    part.register(registration);
-    for (final type in registration.types) {
-      if (_registeredParts.containsKey(type)) {
-        throw StateError(
-          'Part ${part.runtimeType} already registered with type $type',
-        );
-      }
-      _registeredParts[type] = part;
-    }
-  }
-
-  Future<void> _activateParts() async {
-    for (var part in _parts.values.toSet()) {
-      try {
-        await part.activate();
-      } catch (err, trace) {
-        Zone.current.handleUncaughtError(
-          ActivationException(exception: err, trace: trace),
-          trace,
-        );
-      }
-    }
-  }
-
-  Future<void> _deactivateParts() async {
-    for (var part in _parts.values.toSet()) {
-      try {
-        await part.deactivate();
-      } catch (err, trace) {
-        Zone.current.handleUncaughtError(
-          DeactivationException(exception: err, trace: trace),
-          trace,
-        );
-      }
-    }
-  }
-}
-
-mixin _FragmentsRegistry {
-  final Map<Type, FlateFragmentMixin> _storeFragments = {};
-
-  /// Returns all registered parts
-  ///
-  /// Returned map may contains multiple entries for single instance of [FlateFragment].
-  Map<Type, FlateFragmentMixin> get _fragments {
-    return _storeFragments;
-  }
-
-  /// Returns instance of [FlateFragment] by [Type] provided in generic parameter [F]
-  ///
-  /// If instance of [FlateFragment] is not registered by type [F] then [StateError] throws.
-  F useFragment<F>() {
-    final fragments = _fragments;
-    if (!fragments.containsKey(F)) {
-      throw StateError('Fragment of type $F not registered for $runtimeType');
-    }
-
-    return fragments[F] as F;
-  }
-
-  /// Register [fragment] instance
-  void _registerFragment(FlateFragmentMixin fragment) {
-    final registration = Registration(instance: fragment);
-    fragment.register(registration);
-    for (final type in registration.types) {
-      if (_storeFragments.containsKey(type)) {
-        throw StateError(
-          'Fragment ${fragment.runtimeType} already registered with type $type',
-        );
-      }
-      _storeFragments[type] = fragment;
-    }
-  }
-
-  Future<void> _activateFragments() async {
-    for (var fragment in _storeFragments.values.toSet()) {
-      try {
-        await fragment.activate();
-      } catch (err, trace) {
-        Zone.current.handleUncaughtError(
-          ActivationException(exception: err, trace: trace),
-          trace,
-        );
-      }
-    }
-  }
-
-  Future<void> _deactivateFragments() async {
-    for (var fragment in _storeFragments.values.toSet()) {
-      try {
-        await fragment.deactivate();
-      } catch (err, trace) {
-        Zone.current.handleUncaughtError(
-          DeactivationException(exception: err, trace: trace),
-          trace,
-        );
-      }
-    }
-  }
-}
-
-mixin _WidgetsBindingObserverOverride
-    on WidgetsBindingObserver, _AppObserversRegistryMixin {
-  @override
-  void didHaveMemoryPressure() {
-    handleMemoryPressure();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    handleAppLifecycleStateChange(state);
   }
 }

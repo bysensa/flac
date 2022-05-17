@@ -27,7 +27,7 @@ class Flate extends StatefulWidget {
   State<Flate> createState() => _FlateState();
 
   static F useFragment<F extends FlateFragment>(BuildContext context) =>
-      _Scope.of(context)._store.useFragment<F>();
+      _FlateScope.of(context)._store.useFragment<F>();
 }
 
 class _FlateState extends State<Flate> {
@@ -52,7 +52,7 @@ class _FlateState extends State<Flate> {
     setState(() {
       _currentView = _store.lifecycle != FlateStoreLifecycle.ready
           ? widget.loading
-          : _Scope(
+          : _FlateScope(
               store: _store,
               child: widget.ready,
             );
@@ -75,25 +75,26 @@ class _FlateState extends State<Flate> {
   }
 }
 
-class _Scope extends InheritedWidget {
+class _FlateScope extends InheritedWidget {
   final FlateStore _store;
 
-  const _Scope({
+  const _FlateScope({
     Key? key,
     required Widget child,
     required FlateStore store,
   })  : _store = store,
         super(key: key, child: child);
 
-  static _Scope of(BuildContext context) {
-    final element = context.getElementForInheritedWidgetOfExactType<_Scope>();
+  static _FlateScope of(BuildContext context) {
+    final element =
+        context.getElementForInheritedWidgetOfExactType<_FlateScope>();
     assert(element != null, 'No Flate found in context');
 
-    return element!.widget as _Scope;
+    return element!.widget as _FlateScope;
   }
 
   @override
-  bool updateShouldNotify(_Scope old) {
+  bool updateShouldNotify(_FlateScope old) {
     return _store != old._store;
   }
 }

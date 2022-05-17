@@ -4,6 +4,10 @@ import 'package:flate/flate.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+  });
+
   test('fragment should not be mounted until adding to store', () {
     final fragment = TestFragment();
     expect(fragment.isMounted, isFalse);

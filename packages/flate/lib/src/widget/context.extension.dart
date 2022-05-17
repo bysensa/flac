@@ -1,17 +1,8 @@
 import 'package:flutter/widgets.dart';
 
-/// Marker mixin for future usage.
-mixin FlateActivity {}
-
-/// Base class for all user defined [Intent] which can be handled in library.
-abstract class FlateIntent extends Intent with FlateActivity {}
-
-/// Base class for all user defined [Notification] which can be handled in library.
-abstract class FlateNotification extends Notification with FlateActivity {}
-
-/// Extension for [BuildContext] used to simplify some operations with [FlateIntent] or [FlateNotification].
+/// Extension for [BuildContext] used to simplify some operations with [Intent] or [Notification].
 extension BuildContextExtension on BuildContext {
-  /// Returns a [VoidCallback] handler that invokes the bound action for the given [FlateIntent]
+  /// Returns a [VoidCallback] handler that invokes the bound action for the given [Intent]
   /// If the action is enabled, and returns null if the action is not enabled, or no matching action is found.
   ///
   /// This is intended to be used in widgets which have something similar to an onTap handler,
@@ -89,5 +80,5 @@ extension BuildContextExtension on BuildContext {
   ///
   /// The notification will be delivered to any [NotificationListener] widgets with
   /// the appropriate type parameters that are ancestors of the given [BuildContext].
-  void dispatch(FlateNotification notification) => notification.dispatch(this);
+  void dispatch(Notification notification) => notification.dispatch(this);
 }
