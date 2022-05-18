@@ -45,7 +45,7 @@ class _FlateState extends State<Flate> {
       parts: widget.parts,
       services: widget.services,
     )..addListener(_rebuild);
-    _initializationLock.synchronized(_store.activate);
+    _initializationLock.synchronized(_store.prepare);
   }
 
   void _rebuild() {
@@ -62,7 +62,7 @@ class _FlateState extends State<Flate> {
   @override
   void dispose() {
     _store.removeListener(_rebuild);
-    _initializationLock.synchronized(_store.deactivate);
+    _initializationLock.synchronized(_store.release);
     super.dispose();
   }
 

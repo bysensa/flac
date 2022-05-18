@@ -29,7 +29,7 @@ void main() {
     final fragment = TestFragment();
     final store = FlateStore(fragments: [fragment]);
     expect(fragment.isInitialized, isFalse);
-    await store.activate();
+    await store.prepare();
     expect(fragment.isInitialized, isTrue);
   });
 
@@ -37,10 +37,10 @@ void main() {
     final fragment = TestFragment();
     final store = FlateStore(fragments: [fragment]);
     expect(fragment.isInitialized, isFalse);
-    await store.activate();
+    await store.prepare();
     expect(fragment.isInitialized, isTrue);
     expect(fragment.isDisposed, isFalse);
-    await store.deactivate();
+    await store.release();
     expect(fragment.isDisposed, isTrue);
   });
 
@@ -53,7 +53,7 @@ void main() {
       parts: [part],
       services: [service],
     );
-    await store.activate();
+    await store.prepare();
     expect(fragment.part, part);
     expect(fragment.service, service);
   });
@@ -67,15 +67,15 @@ class TestFragment extends FlateFragment {
   TestService get service => useService();
 
   @override
-  FutureOr<void> activate() {
-    super.activate();
+  FutureOr<void> prepare() {
+    super.prepare();
     isInitialized = true;
   }
 
   @override
-  FutureOr<void> deactivate() {
+  FutureOr<void> release() {
     isDisposed = true;
-    super.deactivate();
+    super.release();
   }
 }
 

@@ -21,7 +21,7 @@ part 'core/app_observer.dart';
 abstract class FlateContext with FlateElementMixin {}
 
 /// Default instance of [FlateContext] used when context instance is not provided.
-class DefaultContext extends FlateContext {}
+class DefaultFlateContext extends FlateContext {}
 
 /// This mixin should be used in declaring classes that interact with external resources
 /// such as a database, files or file system, etc.

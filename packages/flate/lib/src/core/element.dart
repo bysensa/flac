@@ -36,7 +36,7 @@ mixin FlateElementMixin {
   /// or allocate some resources
   @mustCallSuper
   @protected
-  FutureOr<void> activate() {}
+  FutureOr<void> prepare() {}
 
   /// This method perform instance dispose
   ///
@@ -45,7 +45,7 @@ mixin FlateElementMixin {
   /// or free some allocated resources
   @mustCallSuper
   @protected
-  FutureOr<void> deactivate() {}
+  FutureOr<void> release() {}
 
   /// Mount provided [store] in this [FlateElementMixin]
   void _mount(FlateStore store) {

@@ -49,7 +49,7 @@ class FlateStore extends ChangeNotifier
   /// Register provided or default [FlateContext] and if context implement [AppObserverMixin]
   /// then register such context as app observer
   void _resolveAndRegisterContext(FlateContext? context) {
-    final resolvedContext = context ?? DefaultContext();
+    final resolvedContext = context ?? DefaultFlateContext();
     _registerElement(resolvedContext, _contextTypes);
     resolvedContext._mount(this);
     _maybeRegisterAppObserver(resolvedContext);
@@ -109,7 +109,7 @@ class FlateStore extends ChangeNotifier
   /// If an exception occurs during the initialization of registered components,
   /// it is intercepted then wrapped in [ActivationException] and
   /// passed up for processing using [Zone.current]
-  FutureOr<void> activate() async {
+  FutureOr<void> prepare() async {
     if (_lifecycle != FlateStoreLifecycle.uninitialized) {
       return;
     }
@@ -131,7 +131,7 @@ class FlateStore extends ChangeNotifier
   /// In the process of freeing resources, the [FlateStore] first frees
   /// the resources allocated in [FlateFragment] then the resources allocated in [FlatePart]
   /// and at the end the resources allocated by [FlateService] are released.
-  FutureOr<void> deactivate() async {
+  FutureOr<void> release() async {
     if (_lifecycle != FlateStoreLifecycle.ready) {
       return;
     }
@@ -224,13 +224,13 @@ mixin _ElementsRegistry {
 
   /// Perform activation of elements provided in [elementsCollection]
   ///
-  /// The [FlateElementMixin.activate] will be called during invocation of this method.
+  /// The [FlateElementMixin.prepare] will be called during invocation of this method.
   Future<void> _activateElements(
     Map<Type, FlateElementMixin> elementsCollection,
   ) async {
     for (var element in elementsCollection.values.toSet()) {
       try {
-        await element.activate();
+        await element.prepare();
       } catch (err, trace) {
         Zone.current.handleUncaughtError(
           ActivationException(exception: err, trace: trace),
@@ -242,13 +242,13 @@ mixin _ElementsRegistry {
 
   /// Perform deactivation of elements in provided [elementsCollection]
   ///
-  /// The [FlateElementMixin.deactivate] will be called during invocation of this method.
+  /// The [FlateElementMixin.release] will be called during invocation of this method.
   Future<void> _deactivateElements(
     Map<Type, FlateElementMixin> elementsCollection,
   ) async {
     for (var element in elementsCollection.values.toSet()) {
       try {
-        await element.deactivate();
+        await element.release();
       } catch (err, trace) {
         Zone.current.handleUncaughtError(
           DeactivationException(exception: err, trace: trace),
