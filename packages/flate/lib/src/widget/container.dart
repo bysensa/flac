@@ -50,7 +50,7 @@ class _FlateState extends State<Flate> {
 
   void _rebuild() {
     setState(() {
-      _currentView = _store.lifecycle != FlateStoreLifecycle.ready
+      _currentView = _store.lifecycle != FlateStoreLifecycle.prepared
           ? widget.loading
           : _FlateScope(
               store: _store,

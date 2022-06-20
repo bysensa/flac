@@ -7,8 +7,9 @@ void main() {
 
     final fragment = store.useFragment<TestFragment>();
     expect(fragment.partMixin, fragment.testPart);
+    expect(fragment.partMixin, isNotNull);
     expect(fragment.serviceMixin, fragment.testService);
-    print('');
+    expect(fragment.serviceMixin, isNotNull);
   });
 }
 

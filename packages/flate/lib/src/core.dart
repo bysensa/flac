@@ -1,24 +1,19 @@
 import 'dart:async';
 import 'dart:collection';
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:meta/meta.dart';
 
+part 'core/registry.dart';
 part 'core/store.dart';
 part 'core/registration.dart';
 part 'core/exceptions.dart';
 part 'core/element.dart';
 part 'core/commit.dart';
 part 'core/app_observer.dart';
-
-/// The class is used to store, initialize and dispose information about current Environment
-///
-/// Potentially, this class can contain information about the current configuration of the application,
-/// instances of global services necessary for the operation of services and other entities necessary
-/// for the correct operation of the application.
-abstract class FlateContext with FlateElementMixin {}
 
 /// Default instance of [FlateContext] used when context instance is not provided.
 class DefaultFlateContext extends FlateContext {}
