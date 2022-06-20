@@ -59,7 +59,7 @@ mixin FlateElementMixin {
   @protected
   C _useContext<C>() {
     if (isMounted) {
-      return _store!._useContext<C>();
+      return _store!.useContext<C>();
     }
     throw StateError('Element of type $runtimeType is not mounted');
   }
@@ -71,7 +71,7 @@ mixin FlateElementMixin {
   @protected
   P _usePart<P>() {
     if (isMounted) {
-      return _store!._usePart<P>();
+      return _store!.usePart<P>();
     }
     throw StateError('Element is not mounted');
   }
@@ -83,7 +83,7 @@ mixin FlateElementMixin {
   @protected
   S _useService<S>() {
     if (isMounted) {
-      return _store!._useService<S>();
+      return _store!.useService<S>();
     }
     throw StateError('Element of type $runtimeType is not mounted');
   }

@@ -18,7 +18,7 @@ mixin _ElementsRegistry {
   /// Returns instance of [FlatePart] by [Type] provided in generic parameter [P]
   ///
   /// If instance of [FlatePart] is not registered by type [P] then [StateError] throws.
-  P _usePart<P>() {
+  P usePart<P>() {
     final lookupKey = ElementKey.part(P);
     if (!_elements.containsKey(lookupKey)) {
       throw StateError('Part of type $P not registered in $runtimeType');
@@ -30,7 +30,7 @@ mixin _ElementsRegistry {
   /// Returns instance of [FlateService] by [Type] provided in generic parameter [S]
   ///
   /// If instance of [FlateService] is not registered by type [S] then [StateError] throws.
-  S _useService<S>() {
+  S useService<S>() {
     final lookupKey = ElementKey.service(S);
     if (!_elements.containsKey(lookupKey)) {
       throw StateError('Service of type $S not registered in $runtimeType');
@@ -42,7 +42,7 @@ mixin _ElementsRegistry {
   /// Returns instance of [FlateContext] by [Type] provided in generic parameter [C]
   ///
   /// If instance of [FlateContext] is not registered by type [C] then [StateError] throws.
-  C _useContext<C>() {
+  C useContext<C>() {
     final lookupKey = ElementKey.context(C);
     if (!_elements.containsKey(lookupKey)) {
       throw StateError('Context of type $C not registered for $runtimeType');
@@ -50,6 +50,19 @@ mixin _ElementsRegistry {
 
     return _elements[lookupKey] as C;
   }
+
+  /// Return true if context of type [T] registered in store else result is false
+  bool isContextRegistered<T>() => _elements.containsKey(ElementKey.context(T));
+
+  /// Return true if service of type [T] registered in store else result is false
+  bool isServiceRegistered<T>() => _elements.containsKey(ElementKey.service(T));
+
+  /// Return true if part of type [T] registered in store else result is false
+  bool isPartRegistered<T>() => _elements.containsKey(ElementKey.part(T));
+
+  /// Return true if fragment of type [T] registered in store else result is false
+  bool isFragmentRegistered<T>() =>
+      _elements.containsKey(ElementKey.fragment(T));
 
   /// Register [element] instance with one or more types
   void _registerElement(
