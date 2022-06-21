@@ -2,14 +2,6 @@ part of '../core.dart';
 
 /// [FlateElementMixin] is main primitive in Flate architecture
 mixin FlateElementMixin {
-  static final _storeMount = Expando<FlateStore>('storeMount');
-
-  /// Returns instance of [FlateStore] connected to this element
-  FlateStore? get _store => _storeMount[this];
-
-  /// Returns true when element connected to store, else getter returns false
-  bool get isMounted => _store != null;
-
   /// This method used during registration to define set of [Type] with which this [FlateElementMixin] will be registered
   ///
   /// By default this method provide type from [runtimeType] getter. This method can be overridden
@@ -36,7 +28,7 @@ mixin FlateElementMixin {
   /// or allocate some resources
   @mustCallSuper
   @protected
-  FutureOr<void> prepare() {}
+  FutureOr<void> prepare(covariant ProviderForElement provider) {}
 
   /// This method perform instance dispose
   ///
@@ -46,86 +38,36 @@ mixin FlateElementMixin {
   @mustCallSuper
   @protected
   FutureOr<void> release() {}
-
-  /// Mount provided [store] in this [FlateElementMixin]
-  void _mount(FlateStore store) {
-    _storeMount[this] = store;
-  }
-
-  /// Provide instance of [FlateContext] by type [C]
-  ///
-  /// If instance for type [C] is not registered then [StateError] will be thrown.
-  /// If element is not mounted([isMounted] returns false) then [StateError] will be thrown
-  @protected
-  C _useContext<C>() {
-    if (isMounted) {
-      return _store!.useContext<C>();
-    }
-    throw StateError('Element of type $runtimeType is not mounted');
-  }
-
-  /// Provide instance of [FlatePart] by type [P]
-  ///
-  /// If instance for type [P] is not registered then [StateError] will be thrown.
-  /// If element is not mounted([isMounted] returns false) then [StateError] will be thrown
-  @protected
-  P _usePart<P>() {
-    if (isMounted) {
-      return _store!.usePart<P>();
-    }
-    throw StateError('Element is not mounted');
-  }
-
-  /// Provide instance of [FlateService] by type [S]
-  ///
-  /// If instance for type [S] is not registered then [StateError] will be thrown.
-  /// If element is not mounted([isMounted] returns false) then [StateError] will be thrown
-  @protected
-  S _useService<S>() {
-    if (isMounted) {
-      return _store!.useService<S>();
-    }
-    throw StateError('Element of type $runtimeType is not mounted');
-  }
 }
 
 /// Mixin used to implement [FlateService] class
 ///
 /// Custom service type can be implemented by mixing [FlateElementMixin] and [FlateServiceMixin]
 mixin FlateServiceMixin on FlateElementMixin {
-  /// Provide instance of [FlateContext] by type [C]
-  @protected
-  C useContext<C>() => _useContext<C>();
+  @override
+  FutureOr<void> prepare(ProviderForService provider) {
+    super.prepare(provider);
+  }
 }
 
 /// Mixin used to implement [FlatePart] class
 ///
 /// Custom part type can be implemented by mixing [FlateElementMixin] and [FlatePartMixin]
 mixin FlatePartMixin on FlateElementMixin {
-  /// Provide instance of [FlateContext] by type [C]
-  @protected
-  C useContext<C>() => _useContext<C>();
-
-  /// Provide instance of [FlateService] by type [S]
-  @protected
-  S useService<S>() => _useService<S>();
+  @override
+  FutureOr<void> prepare(ProviderForPart provider) {
+    super.prepare(provider);
+  }
 }
 
 /// Mixin used to implement [FlateFragment] class
 ///
 /// Custom part type can be implemented by mixing [FlateElementMixin] and [FlateFragmentMixin]
 mixin FlateFragmentMixin on FlateElementMixin {
-  /// Provide instance of [FlateContext] by type [C]
-  @protected
-  C useContext<C>() => _useContext<C>();
-
-  /// Provide instance of [FlateService] by type [S]
-  @protected
-  S useService<S>() => _useService<S>();
-
-  /// Provide instance of [FlatePart] by type [P]
-  @protected
-  P usePart<P>() => _usePart<P>();
+  @override
+  FutureOr<void> prepare(ProviderForFragment provider) {
+    super.prepare(provider);
+  }
 }
 
 /// The class is used to store, initialize and dispose information about current Environment
@@ -134,3 +76,29 @@ mixin FlateFragmentMixin on FlateElementMixin {
 /// instances of global services necessary for the operation of services and other entities necessary
 /// for the correct operation of the application.
 abstract class FlateContext with FlateElementMixin {}
+
+mixin ProviderForElement {}
+
+mixin ProviderForService implements ProviderForElement {
+  /// Provide instance of [FlateContext] by type [C]
+  C useContext<C>();
+}
+
+mixin ProviderForPart implements ProviderForElement {
+  /// Provide instance of [FlateContext] by type [C]
+  C useContext<C>();
+
+  /// Provide instance of [FlateService] by type [S]
+  S useService<S>();
+}
+
+mixin ProviderForFragment implements ProviderForElement {
+  /// Provide instance of [FlateContext] by type [C]
+  C useContext<C>();
+
+  /// Provide instance of [FlateService] by type [S]
+  S useService<S>();
+
+  /// Provide instance of [FlatePart] by type [P]
+  P usePart<P>();
+}

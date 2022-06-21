@@ -1,9 +1,13 @@
+import 'dart:async';
+
 import 'package:flate/flate.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('should resolve part and service', () {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  test('should resolve part and service', () async {
     final store = TestStore();
+    await store.prepare();
 
     final fragment = store.useFragment<TestFragment>();
     expect(fragment.partMixin, fragment.testPart);
@@ -39,11 +43,20 @@ class TestService extends FlateService with ServiceMixin {
 }
 
 class TestFragment extends FlateFragment {
-  late TestPart testPart = usePart();
-  late PartMixin partMixin = usePart();
+  late TestPart testPart;
+  late PartMixin partMixin;
 
-  TestService get testService => useService();
-  ServiceMixin get serviceMixin => useService();
+  late TestService testService;
+  late ServiceMixin serviceMixin;
+
+  @override
+  FutureOr<void> prepare(ProviderForFragment provider) {
+    super.prepare(provider);
+    testService = provider.useService();
+    serviceMixin = provider.useService();
+    testPart = provider.usePart();
+    partMixin = provider.usePart();
+  }
 }
 
 mixin PartMixin {}

@@ -26,9 +26,9 @@ enum FlateStoreLifecycle {
 /// The shared state of the application is implemented through [FlateFragment] and [FlatePart].
 /// In addition to the state, the storage allows you to register and use in fragments the logic
 /// of interaction with external systems through [FlateService].
-class FlateStore extends ChangeNotifier
+class FlateStore extends _ElementsRegistry
     with
-        _ElementsRegistry,
+        ChangeNotifier,
         _AppObserversRegistryMixin,
         WidgetsBindingObserver,
         _WidgetsBindingObserverOverride {
@@ -79,7 +79,6 @@ class FlateStore extends ChangeNotifier
 
   /// Mount this [FlateStore] in [FlateElementMixin] and maybe register it as app observer
   void _afterElementRegistration(FlateElementMixin element) {
-    element._mount(this);
     _maybeRegisterAppObserver(element);
   }
 
@@ -145,7 +144,7 @@ class FlateStore extends ChangeNotifier
   }
 }
 
-abstract class FlateModule with _ElementsRegistry {
+abstract class FlateModule extends _ElementsRegistry {
   Iterable<FlateService> get services => {};
   Iterable<FlatePart> get parts => {};
   Iterable<FlateFragment> get fragments => {};
@@ -160,7 +159,6 @@ abstract class FlateModule with _ElementsRegistry {
 
   void _register(FlateStore store) {
     void _afterElementRegistration(FlateElementMixin element) {
-      element._mount(store);
       store._maybeRegisterAppObserver(element);
     }
 

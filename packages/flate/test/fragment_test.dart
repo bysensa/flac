@@ -8,17 +8,6 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });
 
-  test('fragment should not be mounted until adding to store', () {
-    final fragment = TestFragment();
-    expect(fragment.isMounted, isFalse);
-  });
-
-  test('fragment should not be mounted until adding to store', () {
-    final fragment = TestFragment();
-    final store = FlateStore(fragments: [fragment]);
-    expect(fragment.isMounted, isTrue);
-  });
-
   test('fragment by default should register with self type', () {
     final fragment = TestFragment();
     final store = FlateStore(fragments: [fragment]);
@@ -26,16 +15,28 @@ void main() {
   });
 
   test('fragment should be initialized on store initialize', () async {
+    final part = TestPart();
+    final service = TestService();
     final fragment = TestFragment();
-    final store = FlateStore(fragments: [fragment]);
+    final store = FlateStore(
+      fragments: [fragment],
+      parts: [part],
+      services: [service],
+    );
     expect(fragment.isInitialized, isFalse);
     await store.prepare();
     expect(fragment.isInitialized, isTrue);
   });
 
   test('fragment should be disposed on store dispose', () async {
+    final part = TestPart();
+    final service = TestService();
     final fragment = TestFragment();
-    final store = FlateStore(fragments: [fragment]);
+    final store = FlateStore(
+      fragments: [fragment],
+      parts: [part],
+      services: [service],
+    );
     expect(fragment.isInitialized, isFalse);
     await store.prepare();
     expect(fragment.isInitialized, isTrue);
@@ -63,13 +64,15 @@ class TestFragment extends FlateFragment {
   bool isInitialized = false;
   bool isDisposed = false;
 
-  TestPart get part => usePart();
-  TestService get service => useService();
+  late TestPart part;
+  late TestService service;
 
   @override
-  FutureOr<void> prepare() {
-    super.prepare();
+  FutureOr<void> prepare(ProviderForFragment provider) {
+    super.prepare(provider);
     isInitialized = true;
+    part = provider.usePart();
+    service = provider.useService();
   }
 
   @override

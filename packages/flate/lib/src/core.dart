@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'package:collection/collection.dart';
+import 'package:flate/flate.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';

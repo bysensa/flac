@@ -1,6 +1,11 @@
 part of '../core.dart';
 
-mixin _ElementsRegistry {
+abstract class _ElementsRegistry
+    with
+        ProviderForElement,
+        ProviderForService,
+        ProviderForPart,
+        ProviderForFragment {
   final Map<ElementKey, FlateElementMixin> _elements = {};
 
   /// Returns instance of [FlateFragment] by [Type] provided in generic parameter [F]
@@ -18,6 +23,7 @@ mixin _ElementsRegistry {
   /// Returns instance of [FlatePart] by [Type] provided in generic parameter [P]
   ///
   /// If instance of [FlatePart] is not registered by type [P] then [StateError] throws.
+  @override
   P usePart<P>() {
     final lookupKey = ElementKey.part(P);
     if (!_elements.containsKey(lookupKey)) {
@@ -30,6 +36,7 @@ mixin _ElementsRegistry {
   /// Returns instance of [FlateService] by [Type] provided in generic parameter [S]
   ///
   /// If instance of [FlateService] is not registered by type [S] then [StateError] throws.
+  @override
   S useService<S>() {
     final lookupKey = ElementKey.service(S);
     if (!_elements.containsKey(lookupKey)) {
@@ -42,6 +49,7 @@ mixin _ElementsRegistry {
   /// Returns instance of [FlateContext] by [Type] provided in generic parameter [C]
   ///
   /// If instance of [FlateContext] is not registered by type [C] then [StateError] throws.
+  @override
   C useContext<C>() {
     final lookupKey = ElementKey.context(C);
     if (!_elements.containsKey(lookupKey)) {
@@ -89,7 +97,7 @@ mixin _ElementsRegistry {
   /// The [FlateElementMixin.prepare] will be called during invocation of this method.
   Future<void> _activateElement(FlateElementMixin element) async {
     try {
-      await element.prepare();
+      await element.prepare(this);
     } catch (err, trace) {
       Zone.current.handleUncaughtError(
         ActivationException(exception: err, trace: trace),
