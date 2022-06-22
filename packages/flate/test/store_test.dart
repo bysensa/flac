@@ -50,12 +50,12 @@ class TestFragment extends FlateFragment {
   late ServiceMixin serviceMixin;
 
   @override
-  FutureOr<void> prepare(ProviderForFragment provider) {
+  FutureOr<void> prepare(FlateElementProvider provider) {
     super.prepare(provider);
-    testService = provider.useService();
-    serviceMixin = provider.useService();
-    testPart = provider.usePart();
-    partMixin = provider.usePart();
+    testService = provider();
+    serviceMixin = provider();
+    testPart = provider();
+    partMixin = provider();
   }
 }
 

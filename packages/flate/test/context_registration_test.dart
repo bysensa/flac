@@ -5,30 +5,30 @@ void main() {
   test('should register with only self type', () {
     final context = TestContext();
     final store = FlateStore(context: context);
-    expect(store.isContextRegistered<TestContext>(), isTrue);
-    expect(store.isContextRegistered<AdditionalContextInterface>(), isFalse);
-    expect(store.isContextRegistered<AdditionalContextMixin>(), isFalse);
+    expect(store.isRegistered<TestContext>(), isTrue);
+    expect(store.isRegistered<AdditionalContextInterface>(), isFalse);
+    expect(store.isRegistered<AdditionalContextMixin>(), isFalse);
     expect(
-      () => store.useContext<AdditionalContextInterface>(),
-      throwsStateError,
+      () => store<AdditionalContextInterface>(),
+      throwsAssertionError,
     );
     expect(
-      () => store.useContext<AdditionalContextMixin>(),
-      throwsStateError,
+      () => store<AdditionalContextMixin>(),
+      throwsAssertionError,
     );
-    expect(store.useContext<TestContext>(), context);
+    expect(store<TestContext>(), context);
   });
 
   test('should register with multiple types', () {
     final context = TestContext(onlySelfType: false);
     final store = FlateStore(context: context);
-    expect(store.isContextRegistered<TestContext>(), isTrue);
-    expect(store.isContextRegistered<AdditionalContextInterface>(), isTrue);
-    expect(store.isContextRegistered<AdditionalContextMixin>(), isTrue);
+    expect(store.isRegistered<TestContext>(), isTrue);
+    expect(store.isRegistered<AdditionalContextInterface>(), isTrue);
+    expect(store.isRegistered<AdditionalContextMixin>(), isTrue);
 
-    expect(store.useContext<TestContext>(), context);
-    expect(store.useContext<AdditionalContextInterface>(), context);
-    expect(store.useContext<AdditionalContextMixin>(), context);
+    expect(store<TestContext>(), context);
+    expect(store<AdditionalContextInterface>(), context);
+    expect(store<AdditionalContextMixin>(), context);
   });
 }
 

@@ -68,11 +68,11 @@ class TestFragment extends FlateFragment {
   late TestService service;
 
   @override
-  FutureOr<void> prepare(ProviderForFragment provider) {
+  FutureOr<void> prepare(FlateElementProvider provider) {
     super.prepare(provider);
     isInitialized = true;
-    part = provider.usePart();
-    service = provider.useService();
+    part = provider();
+    service = provider();
   }
 
   @override
