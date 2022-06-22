@@ -52,12 +52,8 @@ class FlateStore extends _ElementsRegistry
         services = services.toSet(),
         modules = modules.toSet() {
     // iterate over previously collected elements and register them
-    for (var entry in _orderedElements) {
-      _registerElement(
-        entry.value,
-        entry.key,
-        afterRegistration: _afterElementRegistration,
-      );
+    for (var element in _orderedElements) {
+      _registerElement(element, afterRegistration: _afterElementRegistration);
     }
     for (var module in modules) {
       module._register(this);
@@ -66,12 +62,12 @@ class FlateStore extends _ElementsRegistry
   }
 
   // collect all elements in single iterable
-  late final Iterable<MapEntry<Type, FlateElementMixin>> _orderedElements =
+  late final Iterable<FlateElementMixin> _orderedElements =
       CombinedIterableView([
-    [MapEntry(FlateContext, context)],
-    services.map((e) => MapEntry(FlateService, e)),
-    parts.map((e) => MapEntry(FlatePart, e)),
-    fragments.map((e) => MapEntry(FlateFragment, e)),
+    [context],
+    services,
+    parts,
+    fragments
   ]);
 
   /// Return this store lifecycle
@@ -102,8 +98,8 @@ class FlateStore extends _ElementsRegistry
 
       _lifecycle = FlateStoreLifecycle.preparing;
       notifyListeners();
-      for (var entry in _orderedElements) {
-        await _activateElement(entry.value);
+      for (var element in _orderedElements) {
+        await _activateElement(element);
       }
       for (var module in modules) {
         await module._prepare();
@@ -133,8 +129,8 @@ class FlateStore extends _ElementsRegistry
         for (var module in modules) {
           await module._release();
         }
-        for (var entry in _orderedElements.toList().reversed) {
-          await _deactivateElement(entry.value);
+        for (var element in _orderedElements.toList().reversed) {
+          await _deactivateElement(element);
         }
       } finally {
         _lifecycle = FlateStoreLifecycle.released;
@@ -150,36 +146,28 @@ abstract class FlateModule extends _ElementsRegistry {
   Iterable<FlateFragment> get fragments => {};
 
   // collect all elements in single iterable
-  late final Iterable<MapEntry<Type, FlateElementMixin>> _orderedElements =
-      CombinedIterableView([
-    services.map((e) => MapEntry(FlateService, e)),
-    parts.map((e) => MapEntry(FlatePart, e)),
-    fragments.map((e) => MapEntry(FlateFragment, e)),
-  ]);
+  late final Iterable<FlateElementMixin> _orderedElements =
+      CombinedIterableView([services, parts, fragments]);
 
   void _register(FlateStore store) {
     void _afterElementRegistration(FlateElementMixin element) {
       store._maybeRegisterAppObserver(element);
     }
 
-    for (var entry in _orderedElements) {
-      _registerElement(
-        entry.value,
-        entry.key,
-        afterRegistration: _afterElementRegistration,
-      );
+    for (var element in _orderedElements) {
+      _registerElement(element, afterRegistration: _afterElementRegistration);
     }
   }
 
   Future<void> _prepare() async {
-    for (var entry in _orderedElements) {
-      await _activateElement(entry.value);
+    for (var element in _orderedElements) {
+      await _activateElement(element);
     }
   }
 
   Future<void> _release() async {
-    for (var entry in _orderedElements.toList().reversed) {
-      await _deactivateElement(entry.value);
+    for (var element in _orderedElements.toList().reversed) {
+      await _deactivateElement(element);
     }
   }
 }

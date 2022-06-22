@@ -1,93 +1,57 @@
 part of '../core.dart';
 
-abstract class _ElementsRegistry
-    with
-        ProviderForElement,
-        ProviderForService,
-        ProviderForPart,
-        ProviderForFragment {
-  final Map<ElementKey, FlateElementMixin> _elements = {};
+abstract class _ElementsRegistry with FlateElementProvider {
+  final Map<Type, FlateElementMixin> _elements = {};
 
   /// Returns instance of [FlateFragment] by [Type] provided in generic parameter [F]
   ///
   /// If instance of [FlateFragment] is not registered by type [F] then [StateError] throws.
-  F useFragment<F>() {
-    final lookupKey = ElementKey.fragment(F);
-    if (!_elements.containsKey(lookupKey)) {
-      throw StateError('Fragment of type $F not registered for $runtimeType');
-    }
-
-    return _elements[lookupKey] as F;
+  F useFragment<F extends FlateFragmentMixin>() {
+    assert(
+      isRegistered<F>(),
+      'Fragment of type $F not registered in $runtimeType',
+    );
+    final targetElement = _elements[F];
+    assert(
+      targetElement is FlateFragmentMixin,
+      'There are no registered FlateFragment conformed to type $F. Only instance of type ${targetElement.runtimeType} conforms to $F',
+    );
+    return _elements[F] as F;
   }
 
-  /// Returns instance of [FlatePart] by [Type] provided in generic parameter [P]
-  ///
-  /// If instance of [FlatePart] is not registered by type [P] then [StateError] throws.
   @override
-  P usePart<P>() {
-    final lookupKey = ElementKey.part(P);
-    if (!_elements.containsKey(lookupKey)) {
-      throw StateError('Part of type $P not registered in $runtimeType');
-    }
-
-    return _elements[lookupKey] as P;
+  T call<T>() {
+    assert(
+      isRegistered<T>(),
+      'Element of type $T not registered in $runtimeType',
+    );
+    final targetElement = _elements[T];
+    assert(
+      targetElement is! FlateFragmentMixin,
+      'Instance of FlateFragment cant be returned by this method. '
+      'Use method useFragment to retrieve registered instance of FlateFragment conformed to type $T. '
+      'If you try to get instance of FlateFragment during preparation of FlateElement when this is impossible '
+      'because according to current architecture you can retrieve FlateFragment after preparation of all elements.',
+    );
+    return _elements[T] as T;
   }
 
-  /// Returns instance of [FlateService] by [Type] provided in generic parameter [S]
-  ///
-  /// If instance of [FlateService] is not registered by type [S] then [StateError] throws.
-  @override
-  S useService<S>() {
-    final lookupKey = ElementKey.service(S);
-    if (!_elements.containsKey(lookupKey)) {
-      throw StateError('Service of type $S not registered in $runtimeType');
-    }
-
-    return _elements[lookupKey] as S;
-  }
-
-  /// Returns instance of [FlateContext] by [Type] provided in generic parameter [C]
-  ///
-  /// If instance of [FlateContext] is not registered by type [C] then [StateError] throws.
-  @override
-  C useContext<C>() {
-    final lookupKey = ElementKey.context(C);
-    if (!_elements.containsKey(lookupKey)) {
-      throw StateError('Context of type $C not registered for $runtimeType');
-    }
-
-    return _elements[lookupKey] as C;
-  }
-
-  /// Return true if context of type [T] registered in store else result is false
-  bool isContextRegistered<T>() => _elements.containsKey(ElementKey.context(T));
-
-  /// Return true if service of type [T] registered in store else result is false
-  bool isServiceRegistered<T>() => _elements.containsKey(ElementKey.service(T));
-
-  /// Return true if part of type [T] registered in store else result is false
-  bool isPartRegistered<T>() => _elements.containsKey(ElementKey.part(T));
-
-  /// Return true if fragment of type [T] registered in store else result is false
-  bool isFragmentRegistered<T>() =>
-      _elements.containsKey(ElementKey.fragment(T));
+  /// Return true if instance of type [T] registered in store else result is false
+  bool isRegistered<T>() => _elements.containsKey(T);
 
   /// Register [element] instance with one or more types
   void _registerElement(
-    FlateElementMixin element,
-    Type baseType, {
+    FlateElementMixin element, {
     void Function(FlateElementMixin)? afterRegistration,
   }) {
     final registration = Registration(instance: element);
     element.register(registration);
     for (final type in registration.types) {
-      final lookupKey = ElementKey._(baseType, type);
-      if (_elements.containsKey(lookupKey)) {
-        throw StateError(
-          '${element.runtimeType} already registered with type $type',
-        );
-      }
-      _elements[lookupKey] = element;
+      assert(
+        !_elements.containsKey(type),
+        '${element.runtimeType} already registered with type $type',
+      );
+      _elements[type] = element;
     }
     afterRegistration?.call(element);
   }
@@ -118,47 +82,5 @@ abstract class _ElementsRegistry
         trace,
       );
     }
-  }
-}
-
-class ElementKey implements Comparable<ElementKey> {
-  static const Map<Type, int> _baseTypePriority = {
-    FlateContext: 0,
-    FlateService: 1,
-    FlatePart: 2,
-    FlateFragment: 3
-  };
-
-  final Type _baseType;
-  final Type _concreteType;
-
-  ElementKey._(this._baseType, this._concreteType);
-
-  ElementKey.context(this._concreteType) : _baseType = FlateContext;
-
-  ElementKey.service(this._concreteType) : _baseType = FlateService;
-
-  ElementKey.part(this._concreteType) : _baseType = FlatePart;
-
-  ElementKey.fragment(this._concreteType) : _baseType = FlateFragment;
-
-  @override
-  bool operator ==(Object other) =>
-      other is ElementKey &&
-      runtimeType == other.runtimeType &&
-      _baseType == other._baseType &&
-      _concreteType == other._concreteType;
-
-  @override
-  int get hashCode => _baseType.hashCode ^ _concreteType.hashCode;
-
-  int get priorityByBaseType => _baseTypePriority[_baseType] ?? 0;
-
-  @override
-  int compareTo(ElementKey other) {
-    if (other == this) {
-      return 0;
-    }
-    return priorityByBaseType - other.priorityByBaseType;
   }
 }

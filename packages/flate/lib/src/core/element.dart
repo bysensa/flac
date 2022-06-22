@@ -25,10 +25,11 @@ mixin FlateElementMixin {
   ///
   /// This method called during [FlateStore] initialization.
   /// Override this method to declare custom initialization logic
-  /// or allocate some resources
+  /// or allocate some resources. Parameter [provider] used to retrieve registered
+  /// instance of [FlateElementMixin].
   @mustCallSuper
   @protected
-  FutureOr<void> prepare(covariant ProviderForElement provider) {}
+  FutureOr<void> prepare(covariant FlateElementProvider provider) {}
 
   /// This method perform instance dispose
   ///
@@ -43,32 +44,17 @@ mixin FlateElementMixin {
 /// Mixin used to implement [FlateService] class
 ///
 /// Custom service type can be implemented by mixing [FlateElementMixin] and [FlateServiceMixin]
-mixin FlateServiceMixin on FlateElementMixin {
-  @override
-  FutureOr<void> prepare(ProviderForService provider) {
-    super.prepare(provider);
-  }
-}
+mixin FlateServiceMixin on FlateElementMixin {}
 
 /// Mixin used to implement [FlatePart] class
 ///
 /// Custom part type can be implemented by mixing [FlateElementMixin] and [FlatePartMixin]
-mixin FlatePartMixin on FlateElementMixin {
-  @override
-  FutureOr<void> prepare(ProviderForPart provider) {
-    super.prepare(provider);
-  }
-}
+mixin FlatePartMixin on FlateElementMixin {}
 
 /// Mixin used to implement [FlateFragment] class
 ///
 /// Custom part type can be implemented by mixing [FlateElementMixin] and [FlateFragmentMixin]
-mixin FlateFragmentMixin on FlateElementMixin {
-  @override
-  FutureOr<void> prepare(ProviderForFragment provider) {
-    super.prepare(provider);
-  }
-}
+mixin FlateFragmentMixin on FlateElementMixin {}
 
 /// The class is used to store, initialize and dispose information about current Environment
 ///
@@ -77,28 +63,10 @@ mixin FlateFragmentMixin on FlateElementMixin {
 /// for the correct operation of the application.
 abstract class FlateContext with FlateElementMixin {}
 
-mixin ProviderForElement {}
-
-mixin ProviderForService implements ProviderForElement {
-  /// Provide instance of [FlateContext] by type [C]
-  C useContext<C>();
-}
-
-mixin ProviderForPart implements ProviderForElement {
-  /// Provide instance of [FlateContext] by type [C]
-  C useContext<C>();
-
-  /// Provide instance of [FlateService] by type [S]
-  S useService<S>();
-}
-
-mixin ProviderForFragment implements ProviderForElement {
-  /// Provide instance of [FlateContext] by type [C]
-  C useContext<C>();
-
-  /// Provide instance of [FlateService] by type [S]
-  S useService<S>();
-
-  /// Provide instance of [FlatePart] by type [P]
-  P usePart<P>();
+/// Mixin to implement callable class which provide instance of [FlateElementMixin]
+mixin FlateElementProvider {
+  /// Returns instance of [FlateElementMixin] which conforms to type [T]
+  ///
+  /// Throws [StateError] in case when type [T] is not registered
+  T call<T>();
 }
