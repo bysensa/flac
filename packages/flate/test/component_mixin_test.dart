@@ -1,6 +1,5 @@
 import 'package:flate/flate.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class FirstIntent extends Intent {}
@@ -81,7 +80,7 @@ void main() {
   });
 
   testWidgets('should handle intents', (tester) async {
-    await tester.pumpWidget(TestWidget());
+    await tester.pumpWidget(const TestWidget());
     await tester.pumpAndSettle();
     final btn = find.byType(ElevatedButton);
     await tester.tap(btn);

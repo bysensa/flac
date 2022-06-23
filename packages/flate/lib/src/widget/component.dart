@@ -1,9 +1,7 @@
-import 'package:flate/flate.dart';
 import 'package:flutter/widgets.dart';
 
 import '../core.dart';
-import 'action.dart';
-import 'container.dart';
+import '../widget.dart';
 
 mixin FlateComponentMixin<T extends StatefulWidget> on State<T> {
   late IntentRegistrator _intentRegistration;

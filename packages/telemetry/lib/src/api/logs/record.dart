@@ -1,7 +1,5 @@
 import 'dart:typed_data';
 
-import '../tracing/trace_id.dart';
-
 typedef Timestamp = int;
 
 mixin LogRecord {

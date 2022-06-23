@@ -3,8 +3,6 @@ import 'dart:collection';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 
-import 'context.extension.dart';
-
 /// Type definition of intent handling function used in [ContextAction] for specific [Intent] type
 typedef ComponentActionCallback<T extends Intent> = Object? Function(
   T intent, [
