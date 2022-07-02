@@ -15,3 +15,10 @@
 * Remove `onNotification` method from FlateComponentModel
 * Implement `ReduceRebuild` mixin and `StatelessReduceRebuildWidget` for widget rebuild optimization 
 * Optimize internal implementation
+
+## 0.1.1
+* Remove AppObserver API. It's now part of user implementation
+* Implement FlateConfiguration for configuration purpose
+* Refactor elements Registration API. Now user can provide custom 
+  FlateRegistry implementation via FlateConfiguration
+* add missing fields to Flate widget
