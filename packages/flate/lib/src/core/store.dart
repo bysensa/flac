@@ -26,38 +26,40 @@ enum FlateStoreLifecycle {
 /// The shared state of the application is implemented through [FlateFragment] and [FlatePart].
 /// In addition to the state, the storage allows you to register and use in fragments the logic
 /// of interaction with external systems through [FlateService].
-class FlateStore extends _ElementsRegistry
-    with
-        ChangeNotifier,
-        _AppObserversRegistryMixin,
-        WidgetsBindingObserver,
-        _WidgetsBindingObserverOverride {
-  FlateStoreLifecycle _lifecycle = FlateStoreLifecycle.unprepared;
+class FlateStore with ChangeNotifier {
+  final FlateConfiguration _configuration;
   final FlateContext context;
   final Set<FlateFragmentMixin> fragments;
   final Set<FlatePartMixin> parts;
   final Set<FlateServiceMixin> services;
   final Set<FlateModule> modules;
 
+  late FlateRegistry _registry;
+  FlateStoreLifecycle _lifecycle = FlateStoreLifecycle.unprepared;
+
   @mustCallSuper
   FlateStore({
+    FlateConfiguration? configuration,
     FlateContext? context,
     Iterable<FlateFragmentMixin> fragments = const [],
     Iterable<FlatePartMixin> parts = const [],
     Iterable<FlateServiceMixin> services = const [],
     Iterable<FlateModule> modules = const [],
-  })  : context = context ?? DefaultFlateContext(),
+  })  : _configuration = configuration ?? const FlateConfiguration(),
+        context = context ?? DefaultFlateContext(),
         fragments = fragments.toSet(),
         parts = parts.toSet(),
         services = services.toSet(),
         modules = modules.toSet() {
+    _registry = _configuration.registryBuilder();
     // iterate over previously collected elements and register them
     for (var element in _orderedElements) {
-      _registerElement(element, afterRegistration: _afterElementRegistration);
+      final registration = Registration(instance: element);
+      element.register(registration);
+      _registry.applyRegistration(registration);
     }
     for (var module in modules) {
-      module._register(this);
-      _elements.addAll(module._elements);
+      module._register(_registry);
     }
   }
 
@@ -70,13 +72,10 @@ class FlateStore extends _ElementsRegistry
     fragments
   ]);
 
+  F useFragment<F extends FlateFragmentMixin>() => _registry.useFragment<F>();
+
   /// Return this store lifecycle
   FlateStoreLifecycle get lifecycle => _lifecycle;
-
-  /// Mount this [FlateStore] in [FlateElementMixin] and maybe register it as app observer
-  void _afterElementRegistration(FlateElementMixin element) {
-    _maybeRegisterAppObserver(element);
-  }
 
   /// This method initialize current store and all [FlateFragment], [FlatePart], [FlateService] registered in this store.
   ///
@@ -98,13 +97,7 @@ class FlateStore extends _ElementsRegistry
 
       _lifecycle = FlateStoreLifecycle.preparing;
       notifyListeners();
-      for (var element in _orderedElements) {
-        await _activateElement(element);
-      }
-      for (var module in modules) {
-        await module._prepare();
-      }
-      WidgetsBinding.instance.addObserver(this);
+      await _registry.prepareElements();
       _lifecycle = FlateStoreLifecycle.prepared;
       notifyListeners();
     });
@@ -124,14 +117,7 @@ class FlateStore extends _ElementsRegistry
       _lifecycle = FlateStoreLifecycle.releasing;
       notifyListeners();
       try {
-        WidgetsBinding.instance.removeObserver(this);
-        _releaseAppObservers();
-        for (var module in modules) {
-          await module._release();
-        }
-        for (var element in _orderedElements.toList().reversed) {
-          await _deactivateElement(element);
-        }
+        await _registry.releaseElements();
       } finally {
         _lifecycle = FlateStoreLifecycle.released;
         notifyListeners();
@@ -140,7 +126,7 @@ class FlateStore extends _ElementsRegistry
   }
 }
 
-abstract class FlateModule extends _ElementsRegistry {
+abstract class FlateModule {
   Iterable<FlateService> get services => {};
   Iterable<FlatePart> get parts => {};
   Iterable<FlateFragment> get fragments => {};
@@ -149,25 +135,13 @@ abstract class FlateModule extends _ElementsRegistry {
   late final Iterable<FlateElementMixin> _orderedElements =
       CombinedIterableView([services, parts, fragments]);
 
-  void _register(FlateStore store) {
-    void _afterElementRegistration(FlateElementMixin element) {
-      store._maybeRegisterAppObserver(element);
-    }
-
+  void _register(FlateRegistry parentRegistry) {
+    final registry = FlateRegistry();
     for (var element in _orderedElements) {
-      _registerElement(element, afterRegistration: _afterElementRegistration);
+      final registration = Registration(instance: element);
+      element.register(registration);
+      registry.applyRegistration(registration);
     }
-  }
-
-  Future<void> _prepare() async {
-    for (var element in _orderedElements) {
-      await _activateElement(element);
-    }
-  }
-
-  Future<void> _release() async {
-    for (var element in _orderedElements.toList().reversed) {
-      await _deactivateElement(element);
-    }
+    parentRegistry.mergeRegistry(registry);
   }
 }

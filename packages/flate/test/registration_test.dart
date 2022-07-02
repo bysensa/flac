@@ -17,6 +17,6 @@ void main() {
   });
 }
 
-class TestType {}
+class TestType with FlateElementMixin {}
 
 mixin NotImplementedType {}

@@ -1,7 +1,29 @@
 part of '../core.dart';
 
-abstract class _ElementsRegistry with FlateElementProvider {
+class FlateRegistry with FlateElementProvider {
   final Map<Type, FlateElementMixin> _elements = {};
+
+  /// Return true if instance of type [T] registered in store else result is false
+  bool isRegistered<T>() => _elements.containsKey(T);
+
+  @override
+  T call<T>() => useElement<T>();
+
+  T useElement<T>() {
+    assert(
+      isRegistered<T>(),
+      'Element of type $T not registered in $runtimeType',
+    );
+    final targetElement = _elements[T];
+    assert(
+      targetElement is! FlateFragmentMixin,
+      'Instance of FlateFragment cant be returned by this method. '
+      'Use method useFragment to retrieve registered instance of FlateFragment conformed to type $T. '
+      'If you try to get instance of FlateFragment during preparation of FlateElement when this is impossible '
+      'because according to current architecture you can retrieve FlateFragment after preparation of all elements.',
+    );
+    return _elements[T] as T;
+  }
 
   /// Returns instance of [FlateFragment] by [Type] provided in generic parameter [F]
   ///
@@ -19,33 +41,37 @@ abstract class _ElementsRegistry with FlateElementProvider {
     return _elements[F] as F;
   }
 
-  @override
-  T call<T>() {
-    assert(
-      isRegistered<T>(),
-      'Element of type $T not registered in $runtimeType',
-    );
-    final targetElement = _elements[T];
-    assert(
-      targetElement is! FlateFragmentMixin,
-      'Instance of FlateFragment cant be returned by this method. '
-      'Use method useFragment to retrieve registered instance of FlateFragment conformed to type $T. '
-      'If you try to get instance of FlateFragment during preparation of FlateElement when this is impossible '
-      'because according to current architecture you can retrieve FlateFragment after preparation of all elements.',
-    );
-    return _elements[T] as T;
+  Future<void> prepareElements() async {
+    final elements = LinkedHashSet.from(_elements.values);
+    for (final element in elements) {
+      try {
+        await element.prepare(this);
+      } catch (err, trace) {
+        Zone.current.handleUncaughtError(
+          ActivationException(exception: err, trace: trace),
+          trace,
+        );
+      }
+    }
   }
 
-  /// Return true if instance of type [T] registered in store else result is false
-  bool isRegistered<T>() => _elements.containsKey(T);
+  Future<void> releaseElements() async {
+    final elements = LinkedHashSet.from(_elements.values.toList().reversed);
+    for (final element in elements) {
+      try {
+        await element.release();
+      } catch (err, trace) {
+        Zone.current.handleUncaughtError(
+          DeactivationException(exception: err, trace: trace),
+          trace,
+        );
+      }
+    }
+    _elements.clear();
+  }
 
-  /// Register [element] instance with one or more types
-  void _registerElement(
-    FlateElementMixin element, {
-    void Function(FlateElementMixin)? afterRegistration,
-  }) {
-    final registration = Registration(instance: element);
-    element.register(registration);
+  void applyRegistration(Registration registration) {
+    final element = registration.instance;
     for (final type in registration.types) {
       assert(
         !_elements.containsKey(type),
@@ -53,34 +79,17 @@ abstract class _ElementsRegistry with FlateElementProvider {
       );
       _elements[type] = element;
     }
-    afterRegistration?.call(element);
   }
 
-  /// Perform activation of elements provided in [elementsCollection]
-  ///
-  /// The [FlateElementMixin.prepare] will be called during invocation of this method.
-  Future<void> _activateElement(FlateElementMixin element) async {
-    try {
-      await element.prepare(this);
-    } catch (err, trace) {
-      Zone.current.handleUncaughtError(
-        ActivationException(exception: err, trace: trace),
-        trace,
+  void mergeRegistry(FlateRegistry registry) {
+    final foreignElements = registry._elements;
+    for (final foreignElement in foreignElements.entries) {
+      assert(
+        !_elements.containsKey(foreignElement.key),
+        'Registry merge failed. Type ${foreignElement.key} already registered '
+        'for element ${_elements[foreignElement.key].runtimeType}',
       );
-    }
-  }
-
-  /// Perform deactivation of elements in provided [elementsCollection]
-  ///
-  /// The [FlateElementMixin.release] will be called during invocation of this method.
-  Future<void> _deactivateElement(FlateElementMixin element) async {
-    try {
-      await element.release();
-    } catch (err, trace) {
-      Zone.current.handleUncaughtError(
-        DeactivationException(exception: err, trace: trace),
-        trace,
-      );
+      _elements[foreignElement.key] = foreignElement.value;
     }
   }
 }

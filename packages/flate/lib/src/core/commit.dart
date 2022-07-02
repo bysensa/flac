@@ -6,19 +6,6 @@ typedef CommitRunner<T> = FutureOr<T> Function(
   String? debugName,
 });
 
-/// Mixin used to override some commit behaviour
-mixin FlateCommitOverrides {
-  static final Lock _commitLock = Lock(reentrant: false);
-  static CommitRunner _commitRunner = runCommit;
-
-  /// Change function used to execute callback provided in [commit] function
-  ///
-  /// Initially [commitRunner] value is [runCommit]
-  static set commitRunner(CommitRunner newCommitRunner) {
-    _commitRunner = newCommitRunner;
-  }
-}
-
 /// Class used to indicate in which context commit is performed.
 ///
 /// If commit performed inside another commit then instance of this class will be
@@ -65,12 +52,12 @@ Future<T> commit<T>(
   final maybeGuard = Zone.current[_CommitGuard];
 
   return maybeGuard != null
-      ? await FlateCommitOverrides._commitRunner(callback, debugName: debugName)
+      ? await FlateConfiguration._commitRunner(callback, debugName: debugName)
       : await runZoned(
           () async {
-            return await FlateCommitOverrides._commitLock.synchronized(
+            return await FlateConfiguration._commitLock.synchronized(
               () async {
-                return await FlateCommitOverrides._commitRunner(
+                return await FlateConfiguration._commitRunner(
                   callback,
                   debugName: debugName,
                 );

@@ -17,9 +17,7 @@ mixin FlateElementMixin {
   ///   }
   /// ```
   @mustCallSuper
-  void register(Registration registration) {
-    registration.types.add(runtimeType);
-  }
+  void register(Registration registration) {}
 
   /// This method perform instance initialization
   ///
@@ -28,7 +26,6 @@ mixin FlateElementMixin {
   /// or allocate some resources. Parameter [provider] used to retrieve registered
   /// instance of [FlateElementMixin].
   @mustCallSuper
-  @protected
   FutureOr<void> prepare(covariant FlateElementProvider provider) {}
 
   /// This method perform instance dispose
@@ -37,7 +34,6 @@ mixin FlateElementMixin {
   /// Override this method to declare custom clean logic
   /// or free some allocated resources
   @mustCallSuper
-  @protected
   FutureOr<void> release() {}
 }
 

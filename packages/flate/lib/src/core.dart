@@ -1,18 +1,18 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:synchronized/synchronized.dart';
 
-part 'core/app_observer.dart';
 part 'core/commit.dart';
 part 'core/element.dart';
 part 'core/exceptions.dart';
 part 'core/registration.dart';
 part 'core/registry.dart';
 part 'core/store.dart';
+part 'core/configuration.dart';
 
 /// Default instance of [FlateContext] used when context instance is not provided.
 class DefaultFlateContext extends FlateContext {}

@@ -4,10 +4,12 @@ import 'package:synchronized/synchronized.dart';
 import '../core.dart';
 
 class Flate extends StatefulWidget {
+  final FlateConfiguration? configuration;
   final FlateContext? context;
   final List<FlateFragment> fragments;
   final List<FlatePart> parts;
   final List<FlateService> services;
+  final List<FlateModule> modules;
   final Widget loading;
   final Widget ready;
   final Duration viewSwitchDuration;
@@ -15,10 +17,12 @@ class Flate extends StatefulWidget {
   const Flate({
     required this.ready,
     required this.loading,
+    this.configuration,
     this.viewSwitchDuration = const Duration(milliseconds: 500),
     this.fragments = const [],
     this.parts = const [],
     this.services = const [],
+    this.modules = const [],
     this.context,
     Key? key,
   }) : super(key: key);
@@ -40,10 +44,12 @@ class _FlateState extends State<Flate> {
     super.initState();
     _currentView = widget.loading;
     _store = FlateStore(
+      configuration: widget.configuration ?? const FlateConfiguration(),
       context: widget.context,
       fragments: widget.fragments,
       parts: widget.parts,
       services: widget.services,
+      modules: widget.modules,
     )..addListener(_rebuild);
     _initializationLock.synchronized(_store.prepare);
   }
