@@ -1,18 +1,22 @@
 part of '../context.dart';
 
 class _ContextImpl implements Context {
-  final Map<ContextKey, dynamic> _values = {};
+  final Map<ContextKey, Object> _values = {};
 
   @override
-  Context _setValue(ContextKey key, dynamic value) {
+  Context _setValue(ContextKey key, Object? value) {
     final newContext = _ContextImpl();
     newContext._values.addAll(_values);
-    newContext._values[key] = value;
+    if (value == null) {
+      newContext._values.remove(key);
+    } else {
+      newContext._values[key] = value;
+    }
     return newContext;
   }
 
   @override
-  dynamic _value(ContextKey key) {
+  Object? _value(ContextKey key) {
     return _values[key];
   }
 }

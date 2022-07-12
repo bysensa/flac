@@ -33,7 +33,7 @@ abstract class Context {
 
   /// Return a new [Context] containing all values from provided [context] with
   /// the new [value] associated with provided [ContextKey].
-  static Context setValue(Context context, ContextKey key, dynamic value) {
+  static Context setValue(Context context, ContextKey key, Object? value) {
     return context._setValue(key, value);
   }
 
@@ -73,8 +73,8 @@ abstract class Context {
   }
 
   /// Returns the value in the Context for the specified [ContextKey].
-  dynamic _value(ContextKey key);
+  Object? _value(ContextKey key);
 
   /// Return a new [Context] containing the new value associated with provided [ContextKey].
-  Context _setValue(ContextKey key, dynamic value);
+  Context _setValue(ContextKey key, Object? value);
 }
