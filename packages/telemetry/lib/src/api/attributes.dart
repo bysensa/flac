@@ -10,7 +10,7 @@ typedef DoubleArrayAttribute = MapEntry<String, List<double>>;
 typedef IntArrayAttribute = MapEntry<String, List<int>>;
 
 extension DynamicToAttribute on dynamic {
-  Attribute attribute(String name) {
+  Attribute attr(String name) {
     if (name.isEmpty) {
       return InvalidAttribute(
         name,
@@ -43,40 +43,40 @@ extension DynamicToAttribute on dynamic {
     }
   }
 }
-
-extension StringToAttribute on String {
-  StringAttribute attribute(String name) => StringAttribute(name, this);
-}
-
-extension BoolToAttribute on bool {
-  BoolAttribute attribute(String name) => BoolAttribute(name, this);
-}
-
-extension DoubleToAttribute on double {
-  DoubleAttribute attribute(String name) => DoubleAttribute(name, this);
-}
-
-extension IntToAttribute on int {
-  IntAttribute attribute(String name) => IntAttribute(name, this);
-}
-
-extension StringListToAttribute on List<String> {
-  StringArrayAttribute attribute(String name) =>
-      StringArrayAttribute(name, this);
-}
-
-extension BoolListToAttribute on List<bool> {
-  BoolArrayAttribute attribute(String name) => BoolArrayAttribute(name, this);
-}
-
-extension DoubleListToAttribute on List<double> {
-  DoubleArrayAttribute attribute(String name) =>
-      DoubleArrayAttribute(name, this);
-}
-
-extension IntListToAttribute on List<int> {
-  IntArrayAttribute attribute(String name) => IntArrayAttribute(name, this);
-}
+//
+// extension StringToAttribute on String {
+//   StringAttribute attribute(String name) => StringAttribute(name, this);
+// }
+//
+// extension BoolToAttribute on bool {
+//   BoolAttribute attribute(String name) => BoolAttribute(name, this);
+// }
+//
+// extension DoubleToAttribute on double {
+//   DoubleAttribute attribute(String name) => DoubleAttribute(name, this);
+// }
+//
+// extension IntToAttribute on int {
+//   IntAttribute attribute(String name) => IntAttribute(name, this);
+// }
+//
+// extension StringListToAttribute on List<String> {
+//   StringArrayAttribute attribute(String name) =>
+//       StringArrayAttribute(name, this);
+// }
+//
+// extension BoolListToAttribute on List<bool> {
+//   BoolArrayAttribute attribute(String name) => BoolArrayAttribute(name, this);
+// }
+//
+// extension DoubleListToAttribute on List<double> {
+//   DoubleArrayAttribute attribute(String name) =>
+//       DoubleArrayAttribute(name, this);
+// }
+//
+// extension IntListToAttribute on List<int> {
+//   IntArrayAttribute attribute(String name) => IntArrayAttribute(name, this);
+// }
 
 class InvalidAttribute implements Attribute {
   @override

@@ -1,4 +1,5 @@
 import 'meter.dart';
+import 'types.dart';
 
 abstract class MeterProvider {
   Meter meter(

@@ -67,7 +67,7 @@ abstract class Context {
   ///
   /// details here: https://opentelemetry.io/docs/reference/specification/context/#detach-context
   static void detach(ContextToken token) {
-    final previousExecutionUnit = ExecutionUnit.current();
+    final previousExecutionUnit = token._executionUnit;
     final previousContext = token._previousContext;
     _contextBinding[previousExecutionUnit] = previousContext;
   }

@@ -1,20 +1,21 @@
+import 'types.dart';
 import 'instruments.dart';
 
-abstract class Meter {
-  MeterName get name;
-  MeterVersion get version;
-  MeterSchemaUrl get schemaUrl;
+class Meter {
+  final MeterName name;
+  final MeterVersion version;
+  final MeterSchemaUrl schemaUrl;
 
-  Counter createCounter();
-  AsyncCounter createAsyncCounter();
-  Histogram createHistogram();
-  AsyncGauge createAsyncGauge();
-  UpDownCounter createUpDownCounter();
-  AsyncUpDownCounter createAsyncUpDownCounter();
+  const Meter({
+    required this.name,
+    required this.version,
+    required this.schemaUrl,
+  });
+
+  Counter createCounter() => Counter();
+  AsyncCounter createAsyncCounter() => AsyncCounter();
+  Histogram createHistogram() => Histogram();
+  AsyncGauge createAsyncGauge() => AsyncGauge();
+  UpDownCounter createUpDownCounter() => UpDownCounter();
+  AsyncUpDownCounter createAsyncUpDownCounter() => AsyncUpDownCounter();
 }
-
-class MeterName {}
-
-class MeterVersion {}
-
-class MeterSchemaUrl {}

@@ -3,7 +3,7 @@ import '../../context.dart';
 
 import 'instrument.dart';
 
-abstract class Histogram<T extends num> extends Instrument {
+class Histogram<T extends num> extends Instrument {
   /// Records a value with a set of attributes.
   ///
   /// [value] The amount of the measurement.
@@ -13,5 +13,21 @@ abstract class Histogram<T extends num> extends Instrument {
     double value, {
     Attributes attributes = const {},
     Context? context,
-  });
+  }) {}
+
+  @override
+  // TODO: implement description
+  InstrumentDescription get description => throw UnimplementedError();
+
+  @override
+  // TODO: implement kind
+  InstrumentKind get kind => throw UnimplementedError();
+
+  @override
+  // TODO: implement name
+  InstrumentName get name => throw UnimplementedError();
+
+  @override
+  // TODO: implement unit
+  InstrumentUnit get unit => throw UnimplementedError();
 }
