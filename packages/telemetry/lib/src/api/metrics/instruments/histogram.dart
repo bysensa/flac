@@ -1,4 +1,5 @@
 import 'package:telemetry/src/api/common.dart';
+import '../../context.dart';
 
 import 'instrument.dart';
 
