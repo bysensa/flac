@@ -1,9 +1,14 @@
 import 'package:stack_trace/stack_trace.dart';
 import 'package:telemetry/src/api/common.dart';
+import 'package:telemetry/src/api/tracing.dart';
+import 'package:telemetry/src/api/tracing/span_id.dart';
+import 'package:telemetry/src/api/tracing/trace_id.dart';
 
 part 'log/impl.dart';
 part 'log/level.dart';
 part 'log/logger.dart';
+part 'log/record.dart';
+part 'log/record.builder.dart';
 
 final dynamic trace = _Log.trace();
 final dynamic debug = _Log.debug();

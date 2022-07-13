@@ -19,7 +19,7 @@ class _Log {
       return;
     }
     final positionalArguments = invocation.positionalArguments;
-    if (positionalArguments.isEmpty || positionalArguments.length > 1) {
+    if (positionalArguments.isEmpty) {
       return;
     }
     final timestamp = DateTime.now();
@@ -27,7 +27,7 @@ class _Log {
     final attributes = invocation.namedArguments.map(
       (key, value) => MapEntry(AttributeName.fromSymbol(key).name, value),
     );
-    final body = invocation.positionalArguments.first;
+    final body = invocation.positionalArguments;
     final callFrame = Trace.current(1).frames.first;
     Logger.emit(
       timestamp: timestamp,

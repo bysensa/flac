@@ -1,25 +1,11 @@
-import 'dart:typed_data';
+part of '../log.dart';
 
-typedef Timestamp = int;
-
-mixin LogRecord {
-  static void debugValidTraceContextFields(
-    Uint8List? traceId,
-    Uint8List? spanId,
-  ) {
-    assert(() {
-      if (traceId != null) {
-        return spanId != null;
-      }
-      return true;
-    }(), 'SpanId should be present when TraceId provided');
-  }
-
+class LogRecord {
   /// Time when the event occurred measured by the origin clock, i.e.
   /// the time at the source.
   ///
   /// This field is optional, it may be missing if the source timestamp is unknown.
-  int? get timestamp;
+  final int? timestamp;
 
   /// Time when the event was observed by the collection system.
   ///
@@ -27,35 +13,35 @@ mixin LogRecord {
   /// is typically set at the generation time and is equal to Timestamp.
   /// For events originating externally and collected by OpenTelemetry (e.g. using Collector)
   /// this is the time when OpenTelemetry’s code observed the event measured by the clock of the OpenTelemetry code.
-  int get observedTimeStamp;
+  final int? observedTimeStamp;
 
   /// Request trace id as defined in W3C Trace Context.
   ///
   /// Can be set for logs that are part of request processing and have
   /// an assigned trace id. This field is optional.
-  Uint8List? get traceId;
+  final TraceId? traceId;
 
   /// Span id.
   ///
   /// Can be set for logs that are part of a particular processing span.
   /// If SpanId is present TraceId SHOULD be also present. This field is optional.
-  Uint8List? get spanId;
+  final SpanId? spanId;
 
   /// Trace flag as defined in W3C Trace Context specification.
   ///
   /// At the time of writing the specification defines one flag - the SAMPLED flag. This field is optional.
-  int? get traceFlags;
+  final int? traceFlags;
 
   /// This is the original string representation of the severity as it is known at the source.
   ///
   /// If this field is missing and SeverityNumber is present then the short name
   /// that corresponds to the SeverityNumber may be used as a substitution. This field is optional.
-  String? get severityText;
+  final String? severityText;
 
   /// Numerical value of the severity, normalized to values described in this document.
   ///
   /// This field is optional.
-  int? get severityNumber;
+  final int? severityNumber;
 
   /// A value containing the body of the log record (see the description of any type above).
   ///
@@ -64,7 +50,7 @@ mixin LogRecord {
   /// of arrays and maps of other values. First-party Applications SHOULD use a string message.
   /// However, a structured body may be necessary to preserve the semantics of some existing log formats.
   /// Can vary for each occurrence of the event coming from the same source. This field is optional.
-  dynamic get body;
+  final Object body;
 
   /// Describes the source of the log, aka resource.
   ///
@@ -75,14 +61,14 @@ mixin LogRecord {
   /// may be designed in a manner that allows the Resource field to be recorded only once per batch
   /// of log records that come from the same source. SHOULD follow OpenTelemetry semantic conventions for Resources.
   /// This field is optional.
-  Map<String, dynamic>? get resource;
+  final Map<String, dynamic>? resource;
 
   /// The instrumentation scope.
   ///
   /// Multiple occurrences of events coming from the same scope can happen across time
   /// and they all have the same value of InstrumentationScope. For log sources which define
   /// a logger name (e.g. Java Logger Name) the Logger Name SHOULD be recorded as the Instrumentation Scope name.
-  List<String>? get instrumentationScope;
+  final List<String>? instrumentationScope;
 
   /// Additional information about the specific event occurrence.
   ///
@@ -91,5 +77,23 @@ mixin LogRecord {
   /// Can contain information about the request context (other than TraceId/SpanId).
   /// SHOULD follow OpenTelemetry semantic conventions for Log Attributes or
   /// semantic conventions for Span Attributes. This field is optional.
-  Map<String, dynamic>? get attributes;
+  final Map<String, Object>? attributes;
+
+  const LogRecord({
+    required this.body,
+    this.timestamp,
+    this.observedTimeStamp,
+    this.traceId,
+    this.spanId,
+    this.traceFlags,
+    this.severityText,
+    this.severityNumber,
+    this.resource,
+    this.instrumentationScope,
+    this.attributes,
+  });
+}
+
+class InvalidLogRecord extends LogRecord {
+  InvalidLogRecord() : super(body: '');
 }
