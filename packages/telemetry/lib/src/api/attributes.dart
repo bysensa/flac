@@ -1,3 +1,5 @@
+import 'package:telemetry/src/api/common.dart';
+
 typedef Attributes = Set<Attribute>;
 typedef Attribute = MapEntry<String, dynamic>;
 typedef StringAttribute = MapEntry<String, String>;
@@ -88,4 +90,30 @@ class InvalidAttribute implements Attribute {
   final String reason;
 
   InvalidAttribute(this.key, this.value, {required this.reason});
+}
+
+class AttributeName {
+  static final RegExp _symbolRegexp = RegExp(r'^\w+\("(.*)"\)');
+  final String name;
+
+  AttributeName(this.name);
+
+  factory AttributeName.fromSymbol(Symbol symbol) {
+    try {
+      final name = _symbolRegexp.firstMatch(symbol.toString())!.group(1)!;
+      return AttributeName(name);
+    } catch (err) {
+      return InvalidAttributeName();
+    }
+  }
+
+  @override
+  String toString() {
+    return name;
+  }
+}
+
+class InvalidAttributeName implements AttributeName {
+  @override
+  String get name => '';
 }

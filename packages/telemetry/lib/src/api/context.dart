@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'context/execution_unit.dart';
 
 part 'context/impl.dart';
@@ -5,6 +7,7 @@ part 'context/key.dart';
 part 'context/token.dart';
 
 final _contextBinding = Expando<Context>();
+final _contextKey = Context.createKey(name: 'context');
 
 /// A Context is a propagation mechanism which carries execution-scoped values across API
 /// boundaries and between logically associated execution units.
@@ -43,8 +46,8 @@ abstract class Context {
   /// if this has not been done before.
   /// details here: https://opentelemetry.io/docs/reference/specification/context/#get-current-context
   static Context current() {
-    final currentExecutionUnit = ExecutionUnit.current();
-    final currentContext = _contextBinding[currentExecutionUnit];
+    final currentContext =
+        Zone.current[_contextKey] ?? _contextBinding[ExecutionUnit.current()];
     return currentContext ?? _root;
   }
 
@@ -72,9 +75,16 @@ abstract class Context {
     _contextBinding[previousExecutionUnit] = previousContext;
   }
 
+  static R wrap<R>(Context context, R Function() callback) {
+    return context._wrap(callback);
+  }
+
   /// Returns the value in the Context for the specified [ContextKey].
   Object? _value(ContextKey key);
 
   /// Return a new [Context] containing the new value associated with provided [ContextKey].
   Context _setValue(ContextKey key, Object? value);
+
+  ///
+  R _wrap<R>(R Function() callback);
 }

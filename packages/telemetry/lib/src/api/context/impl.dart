@@ -19,4 +19,9 @@ class _ContextImpl implements Context {
   Object? _value(ContextKey key) {
     return _values[key];
   }
+
+  @override
+  R _wrap<R>(R Function() callback) {
+    return runZoned(callback, zoneValues: {_contextKey: this});
+  }
 }
