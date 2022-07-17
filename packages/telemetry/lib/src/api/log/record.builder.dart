@@ -7,6 +7,8 @@ class LogRecordBuilder {
   SpanId? _spanId;
   int? _traceFlags;
   LogLevel? _logLevel;
+  String _body = '';
+  Map<String, dynamic> _attributes = {};
 
   set timestamp(DateTime value) {
     _timestamp = value.microsecondsSinceEpoch * 1000;
@@ -32,23 +34,43 @@ class LogRecordBuilder {
     _logLevel = value;
   }
 
-  LogRecord build() {
-    assert(body != null, 'body must be provided to builder');
-    if (body == null) {
-      return InvalidLogRecord();
+  set body(List<dynamic> value) {
+    final bodyParts = [];
+    for (final part in value) {
+      if (part is Exception || part is Error) {
+        _attributes['exception.type'] = part.runtimeType.toString();
+        _attributes['exception.message'] = part.toString();
+      } else if (part is StackTrace) {
+        _attributes['exception.stacktrace'] =
+            Chain.forTrace(trace).terse.toString();
+      } else {
+        bodyParts.add(part);
+      }
     }
-    return LogRecord(
-      body: body!,
-      timestamp: timestamp,
-      attributes: attributes,
-      instrumentationScope: instrumentationScope,
-      observedTimeStamp: observedTimeStamp,
-      resource: resource,
-      severityNumber: severityNumber,
-      severityText: severityText,
-      spanId: spanId,
-      traceFlags: traceFlags,
-      traceId: traceId,
-    );
+    _body = (StringBuffer()..writeAll(bodyParts, ' ')).toString();
   }
+
+  set attributes(Map<String, dynamic> value) {
+    _attributes.addAll(value.flatten());
+  }
+
+  // LogRecord build() {
+  //   assert(body != null, 'body must be provided to builder');
+  //   if (body == null) {
+  //     return InvalidLogRecord();
+  //   }
+  //   return LogRecord(
+  //     body: body!,
+  //     timestamp: timestamp,
+  //     attributes: attributes,
+  //     instrumentationScope: instrumentationScope,
+  //     observedTimeStamp: observedTimeStamp,
+  //     resource: resource,
+  //     severityNumber: severityNumber,
+  //     severityText: severityText,
+  //     spanId: spanId,
+  //     traceFlags: traceFlags,
+  //     traceId: traceId,
+  //   );
+  // }
 }

@@ -19,23 +19,46 @@ class _Log {
       return;
     }
     final positionalArguments = invocation.positionalArguments;
-    if (positionalArguments.isEmpty) {
-      return;
-    }
-    final timestamp = DateTime.now();
-    final observedTimestamp = timestamp;
-    final attributes = invocation.namedArguments.map(
-      (key, value) => MapEntry(AttributeName.fromSymbol(key).name, value),
+
+    print('MainIsolate hashCode: ${Isolate.current.hashCode}');
+    final resArgs = Isolate.spawn(
+      _logRecordFromArgs,
+      positionalArguments,
     );
-    final body = invocation.positionalArguments;
-    final callFrame = Trace.current(1).frames.first;
-    Logger.emit(
-      timestamp: timestamp,
-      observedTimestamp: observedTimestamp,
-      level: level,
-      frame: callFrame,
-      body: body,
-      attributes: attributes,
+    final resNamedArgs = Isolate.spawn(
+      _logRecordFromNamedArgs,
+      invocation.namedArguments,
     );
+
+    // if (positionalArguments.isEmpty) {
+    //   return;
+    // }
+    // final timestamp = DateTime.now();
+    // final observedTimestamp = timestamp;
+    // final attributes = invocation.namedArguments.map(
+    //   (key, value) => MapEntry(AttributeName.fromSymbol(key).name, value),
+    // );
+    // final body = invocation.positionalArguments;
+    // final callFrame = Trace.current(1).frames.first;
+    // Logger.emit(
+    //   timestamp: timestamp,
+    //   observedTimestamp: observedTimestamp,
+    //   level: level,
+    //   frame: callFrame,
+    //   body: body,
+    //   attributes: attributes,
+    // );
   }
+}
+
+void _logRecordFromArgs(List<dynamic> args) {
+  print(args);
+  print('Isolate hashCode: ${Isolate.current.hashCode}');
+  Isolate.exit();
+}
+
+void _logRecordFromNamedArgs(Map<Symbol, dynamic> args) {
+  print(args);
+  print('Isolate hashCode: ${Isolate.current.hashCode}');
+  Isolate.exit();
 }
