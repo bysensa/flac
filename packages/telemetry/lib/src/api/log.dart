@@ -12,6 +12,8 @@ part 'log/level.dart';
 part 'log/logger.dart';
 part 'log/record.dart';
 part 'log/record.builder.dart';
+part 'log/log_emitter.dart';
+part 'log/log_emitter_provider.dart';
 
 final dynamic trace = _Log.trace();
 final dynamic debug = _Log.debug();
