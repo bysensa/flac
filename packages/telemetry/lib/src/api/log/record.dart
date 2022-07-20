@@ -1,6 +1,109 @@
 part of '../log.dart';
 
+class RawLogRecord extends RawSignal {
+  final DateTime timestamp;
+  final Frame callFrame;
+  final Context context;
+  final LogLevel level;
+  final String instrumentationScope;
+  final List<dynamic> body;
+  final Map<dynamic, dynamic> attributes;
+
+  RawLogRecord({
+    required this.timestamp,
+    required this.callFrame,
+    required this.context,
+    required this.level,
+    required this.instrumentationScope,
+    required this.body,
+    required this.attributes,
+  });
+}
+
 class LogRecord {
+  static Map<String, dynamic> _frameToAttributes(Frame frame) {
+    return {
+      'invocation.isCore': frame.isCore,
+      'invocation.library': frame.library,
+      'invocation.package': frame.package,
+      'invocation.location': frame.location,
+      'invocation.member': frame.member,
+      'invocation.line': frame.line,
+      'invocation.column': frame.column,
+    };
+  }
+
+  static String _processBody(
+    List<dynamic> body,
+    Map<String, dynamic> attributes,
+  ) {
+    final bodyParts = [];
+    for (final part in body) {
+      if (part is Exception || part is Error) {
+        attributes['exception.type'] = part.runtimeType.toString();
+        attributes['exception.message'] = part.toString();
+      } else if (part is StackTrace) {
+        attributes['exception.stacktrace'] =
+            Chain.forTrace(part).terse.toString();
+      } else {
+        bodyParts.add(part);
+      }
+    }
+    return (StringBuffer()..writeAll(bodyParts, ' ')).toString();
+  }
+
+  const LogRecord._({
+    required this.body,
+    this.timestamp,
+    this.observedTimeStamp,
+    this.traceId,
+    this.spanId,
+    this.traceFlags,
+    this.severityText,
+    this.severityNumber,
+    this.resource,
+    this.instrumentationScope,
+    this.attributes,
+  });
+
+  factory LogRecord.create({
+    required Frame callFrame,
+    required DateTime timestamp,
+    required LogLevel level,
+    required Context context,
+    required String instrumentationScope,
+    required List<dynamic> body,
+    required Map<String, dynamic> resource,
+    required Map<dynamic, dynamic> attributes,
+  }) {
+    final timestampNanoseconds = timestamp.microsecondsSinceEpoch * 1000;
+    final observedTimestampNanoseconds = timestampNanoseconds;
+    final severityText = level.severityText;
+    final severityNumber = level.severityNumber;
+    final traceId = null; //TODO(bysensa): set real values
+    final spanId = null; //TODO(bysensa): set real values
+    final traceFlags = null; //TODO(bysensa): set real values
+
+    final attributesMap = attributes.flatten();
+    attributesMap.addAll(_frameToAttributes(callFrame));
+
+    final bodyContent = _processBody(body, attributesMap);
+
+    return LogRecord._(
+      body: bodyContent,
+      attributes: attributesMap,
+      instrumentationScope: instrumentationScope,
+      observedTimeStamp: observedTimestampNanoseconds,
+      resource: resource,
+      severityNumber: severityNumber,
+      severityText: severityText,
+      spanId: spanId,
+      timestamp: timestampNanoseconds,
+      traceFlags: traceFlags,
+      traceId: traceId,
+    );
+  }
+
   /// Time when the event occurred measured by the origin clock, i.e.
   /// the time at the source.
   ///
@@ -50,7 +153,7 @@ class LogRecord {
   /// of arrays and maps of other values. First-party Applications SHOULD use a string message.
   /// However, a structured body may be necessary to preserve the semantics of some existing log formats.
   /// Can vary for each occurrence of the event coming from the same source. This field is optional.
-  final Object body;
+  final String body;
 
   /// Describes the source of the log, aka resource.
   ///
@@ -68,7 +171,7 @@ class LogRecord {
   /// Multiple occurrences of events coming from the same scope can happen across time
   /// and they all have the same value of InstrumentationScope. For log sources which define
   /// a logger name (e.g. Java Logger Name) the Logger Name SHOULD be recorded as the Instrumentation Scope name.
-  final List<String>? instrumentationScope;
+  final String? instrumentationScope;
 
   /// Additional information about the specific event occurrence.
   ///
@@ -77,23 +180,5 @@ class LogRecord {
   /// Can contain information about the request context (other than TraceId/SpanId).
   /// SHOULD follow OpenTelemetry semantic conventions for Log Attributes or
   /// semantic conventions for Span Attributes. This field is optional.
-  final Map<String, Object>? attributes;
-
-  const LogRecord({
-    required this.body,
-    this.timestamp,
-    this.observedTimeStamp,
-    this.traceId,
-    this.spanId,
-    this.traceFlags,
-    this.severityText,
-    this.severityNumber,
-    this.resource,
-    this.instrumentationScope,
-    this.attributes,
-  });
-}
-
-class InvalidLogRecord extends LogRecord {
-  InvalidLogRecord() : super(body: '');
+  final Map<String, dynamic>? attributes;
 }

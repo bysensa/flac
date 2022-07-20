@@ -5,16 +5,18 @@ class Logger {
   final String _instrumentationScope;
   final LogLevel _level;
 
-  const Logger._({
-    required String instrumentationScope,
-    required LogLevel level,
-    required LogEmitter logEmitter,
-  })  : _instrumentationScope = instrumentationScope,
-        _level = level;
+  const Logger._(
+      {required String instrumentationScope,
+      required LogLevel level,
+      required LogEmitter logEmitter,
+      s})
+      : _instrumentationScope = instrumentationScope,
+        _level = level,
+        _logEmitter = logEmitter;
 
-  void call(List<dynamic> body, Map<String, dynamic> arguments) {
+  void log(List<dynamic> body, {Map<String, dynamic> arguments = const {}}) {
     final callFrame = Trace.current(1).frames.first;
-    _createLog(callFrame, body, arguments);
+    _emitLog(callFrame, body, arguments);
   }
 
   @override
@@ -29,10 +31,10 @@ class Logger {
     final callFrame = Trace.current(1).frames.first;
     final positionalArguments = invocation.positionalArguments;
     final namedArguments = invocation.namedArguments;
-    _createLog(callFrame, positionalArguments, namedArguments);
+    _emitLog(callFrame, positionalArguments, namedArguments);
   }
 
-  void _createLog(
+  void _emitLog(
     Frame callFrame,
     List<dynamic> body,
     Map<dynamic, dynamic> args,
@@ -44,9 +46,18 @@ class Logger {
       );
       return;
     }
+    final context = Context.current();
     final timestamp = DateTime.now();
-    final attributes = args.map(
-      (key, value) => MapEntry(AttributeName.fromDynamic(key).name, value),
+    final attributes = args.flatten();
+    final record = RawLogRecord(
+      callFrame: callFrame,
+      timestamp: timestamp,
+      level: _level,
+      context: context,
+      instrumentationScope: _instrumentationScope,
+      body: body,
+      attributes: attributes,
     );
+    _logEmitter._emitLog(record);
   }
 }

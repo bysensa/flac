@@ -111,8 +111,6 @@ class AttributeName {
     return value.isEmpty ? InvalidAttributeName() : AttributeName(value);
   }
 
-  factory AttributeName.fromDynamic(dynamic name) {}
-
   @override
   String toString() {
     return name;
