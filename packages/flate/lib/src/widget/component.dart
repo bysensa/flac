@@ -3,6 +3,9 @@ import 'package:flutter/widgets.dart';
 import '../core.dart';
 import '../widget.dart';
 
+abstract class FlateComponent<S extends StatefulWidget> = State<S>
+    with FlateComponentMixin;
+
 mixin FlateComponentMixin<T extends StatefulWidget> on State<T> {
   late IntentRegistrator _intentRegistration;
   late _ComponentInternalAction _internalAction;
