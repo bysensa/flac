@@ -18,33 +18,26 @@ class _TestWidgetState extends State<TestWidget> with FlateComponentMixin {
   var firstIntentHandled = false;
   var secondIntentHandled = false;
 
+  late ComponentAction<FirstIntent> _actionFirstIntent;
+  late ComponentAction<SecondIntent> _actionSecondIntent;
+
   @override
-  void registerIntents(IntentRegistration registration) {
-    registration.register<FirstIntent>();
-    registration.registerWithCallback(onSecondIntent);
+  void initState() {
+    super.initState();
+    _actionFirstIntent = action(onFirstIntent, isEnabledPredicate: (_) {
+      return firstIntentHandled = true;
+    });
+    _actionSecondIntent = action(onSecondIntent, isEnabledPredicate: (_) {
+      return secondIntentHandled = true;
+    });
   }
 
   void onSecondIntent(SecondIntent intent, [BuildContext? context]) {
     processedIntentCount += 1;
   }
 
-  @override
-  Object? invoke(covariant Intent intent, [BuildContext? context]) {
-    if (intent is FirstIntent) {
-      processedIntentCount += 1;
-    }
-    setState(() {});
-    return null;
-  }
-
-  @override
-  bool canHandleIntent(Intent intent) {
-    if (intent is FirstIntent) {
-      firstIntentHandled = true;
-    } else if (intent is SecondIntent) {
-      secondIntentHandled = true;
-    }
-    return true;
+  void onFirstIntent(FirstIntent intent, [BuildContext? context]) {
+    processedIntentCount += 1;
   }
 
   @override

@@ -28,16 +28,14 @@ class FlateRegistry with FlateElementProvider {
   /// Returns instance of [FlateFragment] by [Type] provided in generic parameter [F]
   ///
   /// If instance of [FlateFragment] is not registered by type [F] then [StateError] throws.
-  F useFragment<F extends FlateFragmentMixin>() {
-    assert(
-      isRegistered<F>(),
-      'Fragment of type $F not registered in $runtimeType',
-    );
+  F? useFragment<F extends FlateFragmentMixin>() {
+    if (!isRegistered<F>()) {
+      return null;
+    }
     final targetElement = _elements[F];
-    assert(
-      targetElement is FlateFragmentMixin,
-      'There are no registered FlateFragment conformed to type $F. Only instance of type ${targetElement.runtimeType} conforms to $F',
-    );
+    if (targetElement is! FlateFragmentMixin) {
+      return null;
+    }
     return _elements[F] as F;
   }
 

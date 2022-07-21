@@ -68,7 +68,7 @@ class FlateStore with ChangeNotifier {
     fragments
   ]);
 
-  F useFragment<F extends FlateFragmentMixin>() => _registry.useFragment<F>();
+  F? useFragment<F extends FlateFragmentMixin>() => _registry.useFragment<F>();
 
   /// Return this store lifecycle
   FlateStoreLifecycle get lifecycle => _lifecycle;

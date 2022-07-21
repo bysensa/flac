@@ -1,58 +1,168 @@
+import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import '../core.dart';
 import '../widget.dart';
 
+typedef ComponentActionInvokeHandler<T extends Intent> = Object? Function(T,
+    [BuildContext?]);
+typedef ComponentActionPredicate<T extends Intent> = bool Function(T);
+
 abstract class FlateComponent<S extends StatefulWidget> = State<S>
     with FlateComponentMixin;
 
 mixin FlateComponentMixin<T extends StatefulWidget> on State<T> {
-  late IntentRegistrator _intentRegistration;
-  late _ComponentInternalAction _internalAction;
+  final _actions = _FlateComponentActions();
+
+  ValueListenable<Map<Type, Action<Intent>>> get actions => _actions;
 
   /// Provide [FlateFragment] of type [F] from [FlateStore] provided by [Flate]
-  F useFragment<F extends FlateFragment>() {
+  F? useFragment<F extends FlateFragment>() {
     if (!mounted) {
-      throw StateError(
-        'Method useFragment<$F>() was called on unmounted element',
-      );
+      return null;
     }
 
     return Flate.useFragment<F>(context);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _internalAction = _ComponentInternalAction(
-      consumesKeyDelegate: actionsConsumesKey,
-      invokeDelegate: invoke,
-      isEnabledDelegate: canHandleIntent,
-      isActionEnabledDelegate: () => canHandleIntents,
+  ComponentAction<I> action<I extends Intent>(
+    ComponentActionInvokeHandler<I> handler, {
+    ComponentActionPredicate<I>? consumesKeyPredicate,
+    ComponentActionPredicate<I>? isEnabledPredicate,
+  }) {
+    final _action = ComponentAction<I>(
+      handler: handler,
+      consumesKeyPredicate: consumesKeyPredicate,
+      isEnabledPredicate: isEnabledPredicate,
     );
-    _intentRegistration = IntentRegistrator(
-      intentRegistrationFn: registerIntents,
-      delegatedAction: _internalAction,
-    )..prepare();
+    _actions[_action.intentType] = _action;
+    return _action;
   }
 
-  bool actionsConsumesKey(Intent intent) => false;
-
-  Object? invoke(covariant Intent intent, [BuildContext? context]) {
-    return null;
+  void addAction(ComponentAction action) {
+    _actions[action.intentType] = action;
   }
 
-  bool get canHandleIntents => true;
-
-  bool canHandleIntent(Intent intent) => true;
-
-  void registerIntents(IntentRegistration registration) {}
-
-  void notifyActions() {
-    _internalAction.notifyListeners();
+  bool removeAction(ComponentAction action) {
+    final removedAction = _actions.remove(action.intentType);
+    return removedAction != null;
   }
 }
 
+class ComponentAction<T extends Intent> extends ContextAction<T> {
+  final ComponentActionInvokeHandler<T> _handler;
+  final ComponentActionPredicate<T>? _consumesKeyPredicate;
+  final ComponentActionPredicate<T>? _isEnabledPredicate;
+  bool _isEnabled = true;
+  bool _consumesKey = true;
+
+  ComponentAction({
+    required Object? Function(T, [BuildContext?]) handler,
+    bool Function(T)? consumesKeyPredicate,
+    bool Function(T)? isEnabledPredicate,
+  })  : _handler = handler,
+        _consumesKeyPredicate = consumesKeyPredicate,
+        _isEnabledPredicate = isEnabledPredicate;
+
+  @override
+  bool get isActionEnabled => _isEnabled;
+
+  void enable() {
+    _isEnabled = true;
+    notifyActionListeners();
+  }
+
+  void disable() {
+    _isEnabled = false;
+    notifyActionListeners();
+  }
+
+  void toggle() {
+    _isEnabled = !_isEnabled;
+    notifyActionListeners();
+  }
+
+  void enableKeyConsume() {
+    _consumesKey = true;
+    notifyActionListeners();
+  }
+
+  void disableKeyConsume() {
+    _consumesKey = false;
+    notifyActionListeners();
+  }
+
+  void toggleKeyConsume() {
+    _consumesKey = !_consumesKey;
+    notifyActionListeners();
+  }
+
+  @override
+  bool isEnabled(T intent) {
+    if (_isEnabledPredicate == null) {
+      return _isEnabled;
+    }
+    return _isEnabled && _isEnabledPredicate!(intent);
+  }
+
+  @override
+  bool consumesKey(T intent) {
+    if (_consumesKeyPredicate == null) {
+      return _consumesKey;
+    }
+    return _consumesKey && _consumesKeyPredicate!(intent);
+  }
+
+  @override
+  Object? invoke(T intent, [BuildContext? context]) =>
+      _handler(intent, context);
+}
+
+class _FlateComponentActions extends MapBase<Type, Action>
+    with ChangeNotifier
+    implements ValueListenable<Map<Type, Action>> {
+  final _internal = <Type, Action>{};
+
+  @override
+  Map<Type, Action<Intent>> get value => UnmodifiableMapView(_internal);
+
+  @override
+  Action<Intent>? operator [](Object? key) {
+    return _internal[key];
+  }
+
+  @override
+  void operator []=(Type key, Action<Intent> value) {
+    assert(
+      !_internal.containsKey(key),
+      'Action for intent $key already present',
+    );
+    _internal[key] = value;
+    notifyListeners();
+  }
+
+  @override
+  void clear() {
+    _internal.clear();
+    notifyListeners();
+  }
+
+  @override
+  Iterable<Type> get keys => _internal.keys;
+
+  @override
+  Action<Intent>? remove(Object? key) {
+    final removedValue = _internal.remove(key);
+    if (removedValue != null) {
+      notifyListeners();
+    }
+    return removedValue;
+  }
+}
+
+// =========================== OLD IMPLEMENTATION ========================
 class _ComponentInternalAction extends ContextAction<Intent> {
   final Object? Function(
     Intent intent, [
@@ -155,9 +265,13 @@ class FlateComponentActions extends StatelessReduceRebuildWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Actions(
-      actions: component._intentRegistration,
-      dispatcher: actionDispatcher,
+    return ValueListenableBuilder<Map<Type, Action<Intent>>>(
+      valueListenable: component.actions,
+      builder: (context, value, child) => Actions(
+        actions: value,
+        dispatcher: actionDispatcher,
+        child: child!,
+      ),
       child: child,
     );
   }
