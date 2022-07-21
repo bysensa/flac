@@ -1,16 +1,21 @@
 import 'dart:async';
 
+import 'package:telemetry/src/api/common.dart';
 import 'package:telemetry/src/api/engine.dart';
 import 'package:test/test.dart';
 
 void main() {
   test('should create TelemetryEngine', () async {
-    final controller = StreamController();
-    final engine = await TelemetryEngine.create(controller.sink);
-    engine.send('hello');
-    engine.send('world');
+    final outputStreamController = StreamController<Signal>();
+    final inputStreamController = StreamController<RawSignal>();
+    final engine = await TelemetryEngine.create(
+      outputStreamController.sink,
+      inputStreamController.stream,
+    );
+    inputStreamController.add(TestRawSignal());
+    inputStreamController.add(TestRawSignal());
     expect(
-      controller.stream,
+      outputStreamController.stream,
       emitsInOrder([
         'Receive: hello',
         'Receive: world',
@@ -18,3 +23,5 @@ void main() {
     );
   });
 }
+
+class TestRawSignal extends RawSignal {}

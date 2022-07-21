@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:isolate';
 
-import 'package:telemetry/api.dart';
-
 import 'common.dart';
+import 'log.dart';
+
+part 'engine/processor.dart';
 
 class TelemetryEngine {
   static Future<TelemetryEngine> create(
@@ -12,6 +13,7 @@ class TelemetryEngine {
   ) async {
     final completer = Completer<SendPort>();
     ReceivePort isolateMessagesReceivePort = ReceivePort();
+    ReceivePort isolateErrorsReceivePort = ReceivePort();
 
     final processorMessagesSubscription = isolateMessagesReceivePort.listen(
       (data) {
@@ -35,6 +37,7 @@ class TelemetryEngine {
       debugName: 'telemetry-engine-processor',
       errorsAreFatal: false,
       paused: false,
+      onError: isolateErrorsReceivePort.sendPort,
     );
 
     final messagesProcessorPort = await completer.future;
@@ -45,6 +48,8 @@ class TelemetryEngine {
       processorMessagesSubscription: processorMessagesSubscription,
       processedMessagesSink: processedMessagesSink,
       rawSignalsStream: signalsStream,
+      isolateErrorsReceivePort: isolateErrorsReceivePort,
+      isolateMessagesReceivePort: isolateMessagesReceivePort,
     );
   }
 
@@ -53,6 +58,8 @@ class TelemetryEngine {
   final StreamSubscription _processorMessagesSubscription;
   final StreamSink<Signal> _processedMessagesSink;
   final Stream<RawSignal> _rawSignalsStream;
+  final ReceivePort _isolateMessagesReceivePort;
+  final ReceivePort _isolateErrorsReceivePort;
   late StreamSubscription<RawSignal> _rawSignalsSubscription;
 
   TelemetryEngine._({
@@ -61,11 +68,15 @@ class TelemetryEngine {
     required StreamSubscription processorMessagesSubscription,
     required StreamSink<Signal> processedMessagesSink,
     required Stream<RawSignal> rawSignalsStream,
+    required ReceivePort isolateMessagesReceivePort,
+    required ReceivePort isolateErrorsReceivePort,
   })  : _processorIsolate = processorIsolate,
         _processorInboundPort = processorInboundPort,
         _processorMessagesSubscription = processorMessagesSubscription,
         _processedMessagesSink = processedMessagesSink,
-        _rawSignalsStream = rawSignalsStream {
+        _rawSignalsStream = rawSignalsStream,
+        _isolateMessagesReceivePort = isolateMessagesReceivePort,
+        _isolateErrorsReceivePort = isolateErrorsReceivePort {
     _rawSignalsSubscription = _rawSignalsStream.listen(
       _send,
       onError: _processedMessagesSink.addError,
@@ -81,40 +92,12 @@ class TelemetryEngine {
     }
   }
 
-  void stop() {
-    _rawSignalsSubscription.cancel();
-    _processorMessagesSubscription.cancel();
-    _processorIsolate.kill();
+  Future<void> stop() async {
+    _send(_ExitSignal());
+    _isolateErrorsReceivePort.close();
+    _isolateMessagesReceivePort.close();
+    await _rawSignalsSubscription.cancel();
+    await _processorMessagesSubscription.cancel();
+    await _processedMessagesSink.close();
   }
 }
-
-Future<void> _messagesProcessor(SendPort enginePort) async {
-  ReceivePort receiver = ReceivePort();
-  enginePort.send(receiver.sendPort);
-
-  final messagesIterator = StreamIterator(
-    receiver.handleError(enginePort.send),
-  );
-  while (await messagesIterator.moveNext()) {
-    final message = messagesIterator.current;
-    if (message is RawLogRecord) {
-      _onRawLogSignal(message);
-    } else {
-      enginePort.send(UnprocessableMessageException(message));
-      continue;
-    }
-  }
-}
-
-class UnprocessableMessageException implements Exception {
-  final dynamic message;
-
-  UnprocessableMessageException(this.message);
-
-  @override
-  String toString() {
-    return 'UnprocessableMessageException: cant process message of type ${message.runtimeType}';
-  }
-}
-
-void _onRawLogSignal(RawLogRecord signal) {}

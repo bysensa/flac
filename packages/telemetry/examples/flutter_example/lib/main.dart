@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobx/mobx.dart';
 import 'package:telemetry/telemetry.dart';
 
+import 'loggers.dart';
+
 Future<void> main() async {
   var nullable;
   final obs = Observable(0);

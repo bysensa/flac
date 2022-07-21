@@ -1,14 +1,15 @@
 import 'package:mobx/mobx.dart';
 import 'package:telemetry/telemetry.dart';
 
-Future<void> main() async {
+import 'loggers.dart';
+
+void main() {
   var nullable;
-  final obs = Observable(0);
   try {
     trace('hello world', one: 1, two: 2, three: 3);
     debug('hello world', one: 1, two: 2, three: 3, someInstanceName: 'Hello');
     info('hello world', one: 1, two: 2);
-    warn(obs, one: 1, two: 2);
+    warn(1, one: 1, two: 2);
     fatal(
       SomeMessage(msg: SomeInternalMessage(value: 'hello')),
       one: 1,
@@ -20,7 +21,8 @@ Future<void> main() async {
     fatal(err, trace, one: 1, two: 2);
   }
 
-  await Future.delayed(Duration(seconds: 10));
+  print('done');
+  Telemetry.closeInstance();
 }
 
 class SomeMessage {

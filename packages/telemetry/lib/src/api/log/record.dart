@@ -20,16 +20,11 @@ class RawLogRecord extends RawSignal {
   });
 }
 
-class LogRecord {
+class LogRecord extends Signal {
   static Map<String, dynamic> _frameToAttributes(Frame frame) {
     return {
-      'invocation.isCore': frame.isCore,
-      'invocation.library': frame.library,
-      'invocation.package': frame.package,
       'invocation.location': frame.location,
       'invocation.member': frame.member,
-      'invocation.line': frame.line,
-      'invocation.column': frame.column,
     };
   }
 
@@ -52,7 +47,7 @@ class LogRecord {
     return (StringBuffer()..writeAll(bodyParts, ' ')).toString();
   }
 
-  const LogRecord._({
+  LogRecord._({
     required this.body,
     this.timestamp,
     this.observedTimeStamp,
@@ -65,6 +60,19 @@ class LogRecord {
     this.instrumentationScope,
     this.attributes,
   });
+
+  factory LogRecord.fromRaw(RawLogRecord record) {
+    return LogRecord.create(
+      callFrame: record.callFrame,
+      timestamp: record.timestamp,
+      level: record.level,
+      context: record.context,
+      instrumentationScope: record.instrumentationScope,
+      body: record.body,
+      resource: {},
+      attributes: record.attributes,
+    );
+  }
 
   factory LogRecord.create({
     required Frame callFrame,

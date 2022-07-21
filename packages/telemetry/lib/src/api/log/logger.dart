@@ -2,17 +2,14 @@ part of '../log.dart';
 
 class Logger {
   final LogEmitter _logEmitter;
-  final String _instrumentationScope;
   final LogLevel _level;
 
-  const Logger._(
-      {required String instrumentationScope,
-      required LogLevel level,
-      required LogEmitter logEmitter,
-      s})
-      : _instrumentationScope = instrumentationScope,
-        _level = level,
-        _logEmitter = logEmitter;
+  Logger.create({
+    required String withName,
+    required LogLevel withLevel,
+    required LogEmitterProvider emitterProvider,
+  })  : _level = withLevel,
+        _logEmitter = emitterProvider._logEmitter(name: withName);
 
   void log(List<dynamic> body, {Map<String, dynamic> arguments = const {}}) {
     final callFrame = Trace.current(1).frames.first;
@@ -39,25 +36,29 @@ class Logger {
     List<dynamic> body,
     Map<dynamic, dynamic> args,
   ) {
-    if (body.isEmpty) {
-      assert(
-        body.isEmpty,
-        'Logger should be called with at least one positional arg',
+    try {
+      if (body.isEmpty) {
+        assert(
+          body.isEmpty,
+          'Logger should be called with at least one positional arg',
+        );
+        return;
+      }
+      final context = Context.current();
+      final timestamp = DateTime.now();
+      final attributes = args.flatten();
+      final record = RawLogRecord(
+        callFrame: callFrame,
+        timestamp: timestamp,
+        level: _level,
+        context: context,
+        instrumentationScope: _logEmitter._name,
+        body: body,
+        attributes: attributes,
       );
-      return;
+      _logEmitter._emitLog(record);
+    } catch (err, trace) {
+      _logEmitter._emitError(err, trace);
     }
-    final context = Context.current();
-    final timestamp = DateTime.now();
-    final attributes = args.flatten();
-    final record = RawLogRecord(
-      callFrame: callFrame,
-      timestamp: timestamp,
-      level: _level,
-      context: context,
-      instrumentationScope: _instrumentationScope,
-      body: body,
-      attributes: attributes,
-    );
-    _logEmitter._emitLog(record);
   }
 }

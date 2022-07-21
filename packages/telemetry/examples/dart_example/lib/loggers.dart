@@ -1,38 +1,32 @@
-import 'package:telemetry/api.dart';
-import 'package:test/test.dart';
+import 'package:telemetry/telemetry.dart';
 
+final dynamic trace = Logger.create(
+  withName: 'example',
+  withLevel: LogLevel.trace,
+  emitterProvider: Telemetry(),
+);
 final dynamic debug = Logger.create(
+  withName: 'example',
   withLevel: LogLevel.debug,
-  withName: 'test',
   emitterProvider: Telemetry(),
 );
 final dynamic info = Logger.create(
+  withName: 'example',
   withLevel: LogLevel.info,
-  withName: 'test',
   emitterProvider: Telemetry(),
 );
 final dynamic warn = Logger.create(
+  withName: 'example',
   withLevel: LogLevel.warn,
-  withName: 'test',
   emitterProvider: Telemetry(),
 );
 final dynamic error = Logger.create(
+  withName: 'example',
   withLevel: LogLevel.error,
-  withName: 'test',
   emitterProvider: Telemetry(),
 );
-final dynamic fatal = Telemetry().logger(
+final dynamic fatal = Logger.create(
+  withName: 'example',
   withLevel: LogLevel.fatal,
-  withName: 'test',
+  emitterProvider: Telemetry(),
 );
-
-void main() {
-  test('should emit log record', () async {
-    debug('hello');
-    info('hello');
-    warn('hello');
-    error('hello');
-    fatal('hello');
-    await Future.delayed(Duration(seconds: 1));
-  });
-}

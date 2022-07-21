@@ -11,7 +11,11 @@ import 'api.dart';
 export 'src/api/context.dart';
 export 'src/api/log.dart';
 
-class Telemetry {
+final Finalizer<Telemetry> _telemetryFinalizer = Finalizer((telemetry) {
+  telemetry.close();
+});
+
+class Telemetry with LogEmitterProvider {
   static Telemetry? _instance;
 
   final ResultFuture<TelemetryEngine> _engine;
@@ -22,7 +26,9 @@ class Telemetry {
     this._engine,
     this._rawSignalsStreamController,
     this._signalsStreamController,
-  );
+  ) {
+    _telemetryFinalizer.attach(this, this, detach: this);
+  }
 
   factory Telemetry() {
     if (_instance != null) {
@@ -41,7 +47,8 @@ class Telemetry {
     );
   }
 
-  Sink<RawSignal> get sink {
+  @override
+  EventSink<RawSignal> get sink {
     return _rawSignalsStreamController.sink;
   }
 
