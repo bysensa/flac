@@ -9,8 +9,6 @@ mixin _Alias {}
 class _Context = MockFlateContext with _Alias;
 class _FirstService = MockFlateService with _Alias;
 class _SecondService = MockFlateService with _Alias;
-class _FirstPart = MockFlatePart with _Alias;
-class _SecondPart = MockFlatePart with _Alias;
 class _FirstFragment = MockFlateFragment with _Alias;
 class _SecondFragment = MockFlateFragment with _Alias;
 
@@ -18,8 +16,6 @@ void main() {
   late _Context context;
   late _FirstService firstService;
   late _SecondService secondService;
-  late _FirstPart firstPart;
-  late _SecondPart secondPart;
   late _FirstFragment firstFragment;
   late _SecondFragment secondFragment;
   late List<FlateElementMixin> elements;
@@ -28,16 +24,12 @@ void main() {
     context = _Context();
     firstService = _FirstService();
     secondService = _SecondService();
-    firstPart = _FirstPart();
-    secondPart = _SecondPart();
     firstFragment = _FirstFragment();
     secondFragment = _SecondFragment();
     elements = [
       context,
       firstService,
       secondService,
-      firstPart,
-      secondPart,
       firstFragment,
       secondFragment,
     ];
@@ -61,8 +53,6 @@ void main() {
       () => context.prepare(registry),
       () => firstService.prepare(registry),
       () => secondService.prepare(registry),
-      () => firstPart.prepare(registry),
-      () => secondPart.prepare(registry),
       () => firstFragment.prepare(registry),
       () => secondFragment.prepare(registry),
     ]);
@@ -78,8 +68,6 @@ void main() {
     verifyInOrder([
       () => secondFragment.release(),
       () => firstFragment.release(),
-      () => secondPart.release(),
-      () => firstPart.release(),
       () => secondService.release(),
       () => firstService.release(),
       () => context.release(),

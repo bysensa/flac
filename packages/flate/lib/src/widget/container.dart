@@ -7,7 +7,6 @@ class Flate extends StatefulWidget {
   final FlateConfiguration? configuration;
   final FlateContext? context;
   final List<FlateFragment> fragments;
-  final List<FlatePart> parts;
   final List<FlateService> services;
   final List<FlateModule> modules;
   final Widget loading;
@@ -20,7 +19,6 @@ class Flate extends StatefulWidget {
     this.configuration,
     this.viewSwitchDuration = const Duration(milliseconds: 500),
     this.fragments = const [],
-    this.parts = const [],
     this.services = const [],
     this.modules = const [],
     this.context,
@@ -47,7 +45,6 @@ class _FlateState extends State<Flate> {
       configuration: widget.configuration ?? const FlateConfiguration(),
       context: widget.context,
       fragments: widget.fragments,
-      parts: widget.parts,
       services: widget.services,
       modules: widget.modules,
     )..addListener(_rebuild);

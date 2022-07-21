@@ -30,7 +30,6 @@ class FlateStore with ChangeNotifier {
   final FlateConfiguration _configuration;
   final FlateContext context;
   final Set<FlateFragmentMixin> fragments;
-  final Set<FlatePartMixin> parts;
   final Set<FlateServiceMixin> services;
   final Set<FlateModule> modules;
 
@@ -42,13 +41,11 @@ class FlateStore with ChangeNotifier {
     FlateConfiguration? configuration,
     FlateContext? context,
     Iterable<FlateFragmentMixin> fragments = const [],
-    Iterable<FlatePartMixin> parts = const [],
     Iterable<FlateServiceMixin> services = const [],
     Iterable<FlateModule> modules = const [],
   })  : _configuration = configuration ?? const FlateConfiguration(),
         context = context ?? DefaultFlateContext(),
         fragments = fragments.toSet(),
-        parts = parts.toSet(),
         services = services.toSet(),
         modules = modules.toSet() {
     _registry = _configuration.registryBuilder();
@@ -68,7 +65,6 @@ class FlateStore with ChangeNotifier {
       CombinedIterableView([
     [context],
     services,
-    parts,
     fragments
   ]);
 
@@ -128,12 +124,11 @@ class FlateStore with ChangeNotifier {
 
 abstract class FlateModule {
   Iterable<FlateService> get services => {};
-  Iterable<FlatePart> get parts => {};
   Iterable<FlateFragment> get fragments => {};
 
   // collect all elements in single iterable
   late final Iterable<FlateElementMixin> _orderedElements =
-      CombinedIterableView([services, parts, fragments]);
+      CombinedIterableView([services, fragments]);
 
   void _register(FlateRegistry parentRegistry) {
     final registry = FlateRegistry();

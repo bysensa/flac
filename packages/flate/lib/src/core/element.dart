@@ -42,11 +42,6 @@ mixin FlateElementMixin {
 /// Custom service type can be implemented by mixing [FlateElementMixin] and [FlateServiceMixin]
 mixin FlateServiceMixin on FlateElementMixin {}
 
-/// Mixin used to implement [FlatePart] class
-///
-/// Custom part type can be implemented by mixing [FlateElementMixin] and [FlatePartMixin]
-mixin FlatePartMixin on FlateElementMixin {}
-
 /// Mixin used to implement [FlateFragment] class
 ///
 /// Custom part type can be implemented by mixing [FlateElementMixin] and [FlateFragmentMixin]

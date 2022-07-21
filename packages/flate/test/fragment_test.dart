@@ -15,12 +15,10 @@ void main() {
   });
 
   test('fragment should be initialized on store initialize', () async {
-    final part = TestPart();
     final service = TestService();
     final fragment = TestFragment();
     final store = FlateStore(
       fragments: [fragment],
-      parts: [part],
       services: [service],
     );
     expect(fragment.isInitialized, isFalse);
@@ -29,12 +27,10 @@ void main() {
   });
 
   test('fragment should be disposed on store dispose', () async {
-    final part = TestPart();
     final service = TestService();
     final fragment = TestFragment();
     final store = FlateStore(
       fragments: [fragment],
-      parts: [part],
       services: [service],
     );
     expect(fragment.isInitialized, isFalse);
@@ -46,16 +42,13 @@ void main() {
   });
 
   test('fragment should provide part', () async {
-    final part = TestPart();
     final service = TestService();
     final fragment = TestFragment();
     final store = FlateStore(
       fragments: [fragment],
-      parts: [part],
       services: [service],
     );
     await store.prepare();
-    expect(fragment.part, part);
     expect(fragment.service, service);
   });
 }
@@ -64,14 +57,12 @@ class TestFragment extends FlateFragment {
   bool isInitialized = false;
   bool isDisposed = false;
 
-  late TestPart part;
   late TestService service;
 
   @override
   FutureOr<void> prepare(FlateElementProvider provider) {
     super.prepare(provider);
     isInitialized = true;
-    part = provider();
     service = provider();
   }
 
@@ -81,7 +72,5 @@ class TestFragment extends FlateFragment {
     super.release();
   }
 }
-
-class TestPart extends FlatePart {}
 
 class TestService extends FlateService {}
