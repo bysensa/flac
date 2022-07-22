@@ -11,7 +11,8 @@ void main() {
   test('fragment by default should register with self type', () {
     final fragment = TestFragment();
     final store = FlateStore(fragments: [fragment]);
-    expect(store.useFragment<TestFragment>(), fragment);
+    TestFragment retrievedFragment = store.useFragment();
+    expect(retrievedFragment, fragment);
   });
 
   test('fragment should be initialized on store initialize', () async {

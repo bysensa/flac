@@ -10,8 +10,8 @@ void main() {
     await store.prepare();
 
     final fragment = store.useFragment<TestFragment>();
-    expect(fragment?.serviceMixin, fragment?.testService);
-    expect(fragment?.serviceMixin, isNotNull);
+    expect(fragment.serviceMixin, fragment.testService);
+    expect(fragment.serviceMixin, isNotNull);
   });
 }
 
