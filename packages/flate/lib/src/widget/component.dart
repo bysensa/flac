@@ -6,8 +6,10 @@ import 'package:flutter/widgets.dart';
 import '../core.dart';
 import '../widget.dart';
 
-typedef ComponentActionInvokeHandler<T extends Intent> = Object? Function(T,
-    [BuildContext?]);
+typedef ActionInvokeHandler<T extends Intent> = Object? Function(
+  T, [
+  BuildContext?,
+]);
 typedef ComponentActionPredicate<T extends Intent> = bool Function(T);
 
 abstract class FlateComponent<S extends StatefulWidget> = State<S>
@@ -28,7 +30,7 @@ mixin FlateComponentMixin<T extends StatefulWidget> on State<T> {
   }
 
   ComponentAction<I> action<I extends Intent>(
-    ComponentActionInvokeHandler<I> handler, {
+    ActionInvokeHandler<I> handler, {
     ComponentActionPredicate<I>? consumesKeyPredicate,
     ComponentActionPredicate<I>? isEnabledPredicate,
   }) {
@@ -38,6 +40,7 @@ mixin FlateComponentMixin<T extends StatefulWidget> on State<T> {
       isEnabledPredicate: isEnabledPredicate,
     );
     _actions[_action.intentType] = _action;
+
     return _action;
   }
 
@@ -47,12 +50,19 @@ mixin FlateComponentMixin<T extends StatefulWidget> on State<T> {
 
   bool removeAction(ComponentAction action) {
     final removedAction = _actions.remove(action.intentType);
+
     return removedAction != null;
+  }
+
+  @override
+  void dispose() {
+    _actions.dispose();
+    super.dispose();
   }
 }
 
 class ComponentAction<T extends Intent> extends ContextAction<T> {
-  final ComponentActionInvokeHandler<T> _handler;
+  final ActionInvokeHandler<T> _handler;
   final ComponentActionPredicate<T>? _consumesKeyPredicate;
   final ComponentActionPredicate<T>? _isEnabledPredicate;
   bool _isEnabled = true;
@@ -104,6 +114,7 @@ class ComponentAction<T extends Intent> extends ContextAction<T> {
     if (_isEnabledPredicate == null) {
       return _isEnabled;
     }
+
     return _isEnabled && _isEnabledPredicate!(intent);
   }
 
@@ -112,6 +123,7 @@ class ComponentAction<T extends Intent> extends ContextAction<T> {
     if (_consumesKeyPredicate == null) {
       return _consumesKey;
     }
+
     return _consumesKey && _consumesKeyPredicate!(intent);
   }
 
@@ -127,6 +139,9 @@ class _FlateComponentActions extends MapBase<Type, Action>
 
   @override
   Map<Type, Action<Intent>> get value => UnmodifiableMapView(_internal);
+
+  @override
+  Iterable<Type> get keys => _internal.keys;
 
   @override
   Action<Intent>? operator [](Object? key) {
@@ -150,52 +165,13 @@ class _FlateComponentActions extends MapBase<Type, Action>
   }
 
   @override
-  Iterable<Type> get keys => _internal.keys;
-
-  @override
   Action<Intent>? remove(Object? key) {
     final removedValue = _internal.remove(key);
     if (removedValue != null) {
       notifyListeners();
     }
+
     return removedValue;
-  }
-}
-
-// =========================== OLD IMPLEMENTATION ========================
-class _ComponentInternalAction extends ContextAction<Intent> {
-  final Object? Function(
-    Intent intent, [
-    BuildContext? context,
-  ]) invokeDelegate;
-
-  final bool Function(Intent intent) isEnabledDelegate;
-  final bool Function(Intent intent) consumesKeyDelegate;
-  final bool Function() isActionEnabledDelegate;
-
-  _ComponentInternalAction({
-    required this.invokeDelegate,
-    required this.isEnabledDelegate,
-    required this.consumesKeyDelegate,
-    required this.isActionEnabledDelegate,
-  });
-
-  @override
-  bool get isActionEnabled => isActionEnabledDelegate();
-
-  @override
-  Object? invoke(Intent intent, [BuildContext? context]) {
-    return invokeDelegate(intent, context);
-  }
-
-  @override
-  bool isEnabled(Intent intent) => isEnabledDelegate(intent);
-
-  @override
-  bool consumesKey(Intent intent) => consumesKeyDelegate(intent);
-
-  void notifyListeners() {
-    notifyActionListeners();
   }
 }
 
