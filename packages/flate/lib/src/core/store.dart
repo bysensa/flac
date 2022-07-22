@@ -27,14 +27,22 @@ enum FlateStoreLifecycle {
 /// In addition to the state, the storage allows you to register and use in fragments the logic
 /// of interaction with external systems through [FlateService].
 class FlateStore with ChangeNotifier {
-  final FlateConfiguration _configuration;
   final FlateContext context;
   final Set<FlateFragmentMixin> fragments;
   final Set<FlateServiceMixin> services;
   final Set<FlateModule> modules;
+  final FlateConfiguration _configuration;
 
   late FlateRegistry _registry;
   FlateStoreLifecycle _lifecycle = FlateStoreLifecycle.unprepared;
+
+  // collect all elements in single iterable
+  late final Iterable<FlateElementMixin> _orderedElements =
+      CombinedIterableView([
+    [context],
+    services,
+    fragments,
+  ]);
 
   @mustCallSuper
   FlateStore({
@@ -60,18 +68,10 @@ class FlateStore with ChangeNotifier {
     }
   }
 
-  // collect all elements in single iterable
-  late final Iterable<FlateElementMixin> _orderedElements =
-      CombinedIterableView([
-    [context],
-    services,
-    fragments
-  ]);
-
-  F useFragment<F extends FlateFragmentMixin>() => _registry.useFragment<F>();
-
   /// Return this store lifecycle
   FlateStoreLifecycle get lifecycle => _lifecycle;
+
+  F useFragment<F extends FlateFragmentMixin>() => _registry.useFragment<F>();
 
   /// This method initialize current store and all [FlateFragment], [FlatePart], [FlateService] registered in this store.
   ///
@@ -123,12 +123,12 @@ class FlateStore with ChangeNotifier {
 }
 
 abstract class FlateModule {
-  Iterable<FlateService> get services => {};
-  Iterable<FlateFragment> get fragments => {};
-
   // collect all elements in single iterable
   late final Iterable<FlateElementMixin> _orderedElements =
       CombinedIterableView([services, fragments]);
+
+  Iterable<FlateService> get services => {};
+  Iterable<FlateFragment> get fragments => {};
 
   void _register(FlateRegistry parentRegistry) {
     final registry = FlateRegistry();

@@ -40,6 +40,7 @@ class TestElementProvider with FlateElementProvider {
       targetElement is T,
       'Registered instance of type ${targetElement.runtimeType} does not conforms to type $T',
     );
+
     return targetElement as T;
   }
 }

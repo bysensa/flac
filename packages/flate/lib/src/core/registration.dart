@@ -18,7 +18,7 @@ class Registration {
   /// Type from [instance.runtimeType] also included in returned iterable.
   Iterable<Type> get types => CombinedIterableView([
         {_instance.runtimeType},
-        _types
+        _types,
       ]);
 
   /// Method store [Type] provided by generic parameter [T] in [types]

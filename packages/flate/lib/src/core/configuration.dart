@@ -3,10 +3,9 @@ part of '../core.dart';
 typedef RegistryBuilder = FlateRegistry Function();
 
 class FlateConfiguration {
+  final RegistryBuilder registryBuilder;
   static final Lock _commitLock = Lock(reentrant: false);
   static CommitRunner _commitRunner = runCommit;
-
-  final RegistryBuilder registryBuilder;
 
   const FlateConfiguration({
     this.registryBuilder = FlateRegistry.new,
