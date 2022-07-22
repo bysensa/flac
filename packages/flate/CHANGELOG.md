@@ -22,3 +22,8 @@
 * Refactor elements Registration API. Now user can provide custom 
   FlateRegistry implementation via FlateConfiguration
 * add missing fields to Flate widget
+
+## 0.2.0
+* Reimplement Component API
+* Remove primitive FlatePart
+* 
