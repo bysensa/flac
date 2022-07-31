@@ -26,3 +26,6 @@
 ## 0.2.0
 * Reimplement Component API
 * Remove primitive FlatePart
+
+## 0.2.1
+* [FIX] resolve problem with assertion when try to provide Fragment using method `useElement`
