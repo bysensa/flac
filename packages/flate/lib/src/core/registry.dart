@@ -16,11 +16,9 @@ class FlateRegistry with FlateElementProvider {
     );
     final targetElement = _elements[T];
     assert(
-      targetElement is! FlateFragmentMixin,
-      'Instance of FlateFragment cant be returned by this method. '
-      'Use method useFragment to retrieve registered instance of FlateFragment conformed to type $T. '
-      'If you try to get instance of FlateFragment during preparation of FlateElement when this is impossible '
-      'because according to current architecture you can retrieve FlateFragment after preparation of all elements.',
+      targetElement is T,
+      'Instance of type ${targetElement.runtimeType} does not conform to type $T. '
+      'This problems occur on framework level. Please contact with developer to fix this problem.',
     );
 
     return _elements[T] as T;

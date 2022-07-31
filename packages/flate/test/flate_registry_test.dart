@@ -159,4 +159,12 @@ void main() {
       () => context.release(),
     ]);
   });
+
+  test('should return FlateFragment`s via useElement', () {
+    final registry = FlateRegistry();
+    final registration = Registration(instance: firstFragment);
+    registry.applyRegistration(registration);
+    expect(registry.isRegistered<_FirstFragment>(), isTrue);
+    expect(registry.useElement<_FirstFragment>(), firstFragment);
+  });
 }
